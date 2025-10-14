@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug mawaku CLI",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=mawaku"
+                ]
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "terminal": "integrated"
+        }
+    ]
+}
