@@ -2,22 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug mawaku CLI",
+            "name": "Debug mawaku",
             "type": "lldb",
             "request": "launch",
-            "cargo": {
-                "args": [
-                    "build",
-                    "--bin=mawaku"
-                ]
-            },
-            "args": [
-                "--prompt",
-                "A spaceship, calm and far away"
-            ],
-            "cwd": "${workspaceFolder}",
-            "env": {},
-            "terminal": "integrated"
+            "preLaunchTask": "cargo build",
+            "program": "${workspaceFolder}/mawaku-rs/target/debug/mawaku",
+            "args": [],
+            "cwd": "${workspaceFolder}/mawaku-rs"
         }
     ]
 }

@@ -1,0 +1,16 @@
+[package]
+name = "mawaku-config"
+version = "0.0.0"
+edition = "2024"
+description = "Configuration loader for the Mawaku CLI"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "mawaku_config"
+path = "src/lib.rs"
+
+[dependencies]
+directories = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+toml = { workspace = true }

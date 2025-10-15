@@ -1,4 +1,7 @@
+/.cargo/
+/.rustup/
 /target
+**/target
 **/*.rs.bk
 .DS_Store
 
