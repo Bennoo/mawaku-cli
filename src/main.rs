@@ -12,9 +12,19 @@ use clap::Parser;
     about = "Generate video-call backgrounds by describing a place.",
     long_about = None
 )]
-struct Cli;
+struct Cli {
+    /// Describe the workspace background you want to generate.
+    #[arg(long, value_name = "TEXT")]
+    prompt: Option<String>,
+}
 
 fn main() {
-    let _ = Cli::parse();
-    println!("Imagine a workspace with immersive backgrounds! (Use --help for options.)");
+    let cli = Cli::parse();
+
+    let prompt = cli
+        .prompt
+        .as_deref()
+        .unwrap_or("Imagine a workspace with immersive backgrounds! (Use --help for options.)");
+
+    println!("{prompt}");
 }

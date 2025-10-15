@@ -11,7 +11,10 @@
                     "--bin=mawaku"
                 ]
             },
-            "args": [],
+            "args": [
+                "--prompt",
+                "A spaceship, calm and far away"
+            ],
             "cwd": "${workspaceFolder}",
             "env": {},
             "terminal": "integrated"
