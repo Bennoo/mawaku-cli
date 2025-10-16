@@ -1,8 +1,11 @@
 use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init, save};
-use mawaku_gemini::generate_image;
+use mawaku_gemini::{generate_image, GeminiError, PredictResponse};
 use mawaku_image::{SaveImageOptions, save_base64_image};
+use std::io::{self, Write};
 use std::path::PathBuf;
+use std::thread;
+use std::time::{Duration, Instant};
 
 const GEMINI_KEY_WARNING: &str =
     "Warning: GEMINI_API_KEY is not set. Use `mawaku --set-gemini-api-key <KEY>` to configure it.";
@@ -28,6 +31,48 @@ struct Cli {
     set_gemini_api_key: Option<String>,
 }
 
+fn generate_image_with_progress(
+    api_key: &str,
+    prompt: &str,
+) -> Option<Result<PredictResponse, GeminiError>> {
+    let api_key = api_key.to_string();
+    let prompt = prompt.to_string();
+
+    let handle = thread::Builder::new()
+        .name("gemini-image-request".into())
+        .spawn(move || generate_image(&api_key, &prompt))
+        .expect("spawn gemini image request");
+
+    const SPINNER_FRAMES: &[&str] = &["|", "/", "-", "\\"];
+    let mut frame_index = 0;
+    let interval = Duration::from_millis(200);
+    let start = Instant::now();
+
+    eprint!("Generating image ");
+    let _ = io::stderr().flush();
+
+    while !handle.is_finished() {
+        eprint!("\rGenerating image {}", SPINNER_FRAMES[frame_index]);
+        let _ = io::stderr().flush();
+        frame_index = (frame_index + 1) % SPINNER_FRAMES.len();
+        thread::sleep(interval);
+    }
+
+    match handle.join() {
+        Ok(result) => {
+            eprintln!(
+                "\rGenerating image ... finished in {:.1}s",
+                start.elapsed().as_secs_f32()
+            );
+            Some(result)
+        }
+        Err(_) => {
+            eprintln!("\rGenerating image ... failed: worker panicked");
+            None
+        }
+    }
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -43,8 +88,8 @@ fn main() {
 
     if context.config_ready {
         if let Some(api_key) = context.gemini_api_key.as_deref() {
-            match generate_image(api_key, &context.prompt) {
-                Ok(response) => {
+            match generate_image_with_progress(api_key, &context.prompt) {
+                Some(Ok(response)) => {
                     eprintln!(
                         "Gemini generated {} prediction(s).",
                         response.predictions.len()
@@ -84,8 +129,11 @@ fn main() {
                         }
                     }
                 }
-                Err(error) => {
+                Some(Err(error)) => {
                     eprintln!("Warning: failed to generate image via Gemini ({error}).");
+                }
+                None => {
+                    eprintln!("Warning: image generation request ended unexpectedly.");
                 }
             }
         }
