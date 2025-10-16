@@ -4,6 +4,7 @@ use thiserror::Error;
 
 pub const DEFAULT_MODEL_VERSION: &str = "imagen-4.0-generate-001";
 pub const DEFAULT_SAMPLE_COUNT: u32 = 2;
+pub const DEFAULT_ASPECT_RATIO: &str = "16:9";
 
 #[derive(Debug, Error)]
 pub enum GeminiError {
@@ -42,13 +43,15 @@ struct Instance<'a> {
 struct Parameters {
     #[serde(rename = "sampleCount")]
     sample_count: u32,
+    #[serde(rename = "aspectRatio", skip_serializing_if = "Option::is_none")]
+    aspect_ratio: Option<String>,
 }
 
 impl<'a> PredictRequest<'a> {
-    fn new(prompt: &'a str, sample_count: u32) -> Self {
+    fn new(prompt: &'a str, sample_count: u32, aspect_ratio: Option<String>) -> Self {
         Self {
             instances: vec![Instance { prompt }],
-            parameters: Parameters { sample_count },
+            parameters: Parameters { sample_count, aspect_ratio },
         }
     }
 }
@@ -76,7 +79,7 @@ pub fn generate_image(api_key: &str, prompt: &str) -> Result<PredictResponse, Ge
 
     let client = Client::new();
     let url = endpoint_url();
-    let request_body = PredictRequest::new(prompt, DEFAULT_SAMPLE_COUNT);
+    let request_body = PredictRequest::new(prompt, DEFAULT_SAMPLE_COUNT, Some(DEFAULT_ASPECT_RATIO.to_string()));
 
     let response = client
         .post(url)
