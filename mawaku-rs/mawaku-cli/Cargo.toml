@@ -11,3 +11,4 @@ categories = ["command-line-utilities"]
 [dependencies]
 clap = { workspace = true }
 mawaku-config = { path = "../mawaku-config" }
+
