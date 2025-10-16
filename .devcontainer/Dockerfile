@@ -34,4 +34,8 @@ RUN mkdir -p /root/.codex
 COPY .devcontainer/codex_config.toml /root/.codex/config.toml
 COPY .devcontainer/auth.json /root/.codex/auth.json
 
+# Copy mawaku config if it exists in build context
+RUN mkdir -p /root/.mawaku
+COPY .devcontainer/config.toml* /root/.mawaku/config.toml
+
 WORKDIR /workspace

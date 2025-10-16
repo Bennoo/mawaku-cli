@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub const DEFAULT_PROMPT: &str =
-    "Imagine a workspace with immersive backgrounds! (Use --help for options.)";
+    "A background image for a video call, showing a tidy, well-lit home office with a modern desk. The style is clean and minimalistic.";
 pub const DEFAULT_GEMINI_API_KEY: &str = "";
 
 #[derive(Debug, Error)]
@@ -28,6 +28,7 @@ pub enum ConfigError {
 pub struct Config {
     pub default_prompt: String,
     pub gemini_api_key: String,
+    pub image_output_dir: String,
 }
 
 impl Default for Config {
@@ -35,6 +36,7 @@ impl Default for Config {
         Self {
             default_prompt: DEFAULT_PROMPT.to_string(),
             gemini_api_key: DEFAULT_GEMINI_API_KEY.to_string(),
+            image_output_dir: default_image_output_dir().unwrap_or_else(|_| ".".to_string()),
         }
     }
 }
@@ -45,7 +47,17 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
 
     if path.exists() {
         let contents = fs::read_to_string(&path)?;
-        let config = toml::from_str(&contents)?;
+        let mut config: Config = toml::from_str(&contents)?;
+        let expected_dir = default_image_output_dir_for(&path);
+
+        let missing_field = !contents.contains("image_output_dir");
+        let empty_field = config.image_output_dir.trim().is_empty();
+
+        if missing_field || empty_field {
+            config.image_output_dir = expected_dir;
+            save(&config, &path)?;
+        }
+
         Ok(LoadOutcome {
             config,
             path,
@@ -53,7 +65,8 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
         })
     } else {
         ensure_parent_exists(&path)?;
-        let config = Config::default();
+        let mut config = Config::default();
+        config.image_output_dir = default_image_output_dir_for(&path);
         save(&config, &path)?;
         Ok(LoadOutcome {
             config,
@@ -86,8 +99,22 @@ fn ensure_parent_exists(path: &Path) -> Result<(), ConfigError> {
 }
 
 fn config_file_path() -> Result<PathBuf, ConfigError> {
+    Ok(config_directory()?.join("config.toml"))
+}
+
+fn config_directory() -> Result<PathBuf, ConfigError> {
     let base_dirs = BaseDirs::new().ok_or(ConfigError::ConfigDirUnavailable)?;
-    Ok(base_dirs.home_dir().join(".mawaku").join("config.toml"))
+    Ok(base_dirs.home_dir().join(".mawaku"))
+}
+
+fn default_image_output_dir() -> Result<String, ConfigError> {
+    config_directory().map(|path| path.to_string_lossy().into_owned())
+}
+
+fn default_image_output_dir_for(path: &Path) -> String {
+    path.parent()
+        .map(|dir| dir.to_string_lossy().into_owned())
+        .unwrap_or_else(|| ".".to_string())
 }
 
 #[cfg(test)]

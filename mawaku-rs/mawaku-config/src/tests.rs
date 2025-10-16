@@ -20,14 +20,47 @@ fn config_default_uses_empty_gemini_api_key() {
 }
 
 #[test]
+fn config_default_sets_image_output_dir() {
+    let config = Config::default();
+    assert!(!config.image_output_dir.trim().is_empty());
+}
+
+#[test]
 fn load_or_init_creates_file_with_empty_gemini_api_key() {
     with_isolated_home(|_| {
         let outcome = load_or_init().expect("load default config");
         assert!(outcome.created);
         assert_eq!(outcome.config.gemini_api_key, DEFAULT_GEMINI_API_KEY);
+        assert!(!outcome.config.image_output_dir.trim().is_empty());
 
         let contents = fs::read_to_string(outcome.path).expect("read config");
         assert!(contents.contains("gemini_api_key = \"\""));
+        assert!(contents.contains("image_output_dir ="));
+    });
+}
+
+#[test]
+fn load_or_init_backfills_missing_image_output_dir() {
+    with_isolated_home(|home| {
+        let config_dir = home.join(".mawaku");
+        fs::create_dir_all(&config_dir).expect("create config dir");
+        let path = config_dir.join("config.toml");
+        fs::write(
+            &path,
+            r#"
+default_prompt = "Test"
+gemini_api_key = ""
+"#,
+        )
+        .expect("write legacy config");
+
+        let outcome = load_or_init().expect("load legacy config");
+        assert!(!outcome.created);
+        let expected_dir = config_dir.to_string_lossy().into_owned();
+        assert_eq!(outcome.config.image_output_dir, expected_dir);
+
+        let contents = fs::read_to_string(&path).expect("read config");
+        assert!(contents.contains(&format!("image_output_dir = \"{expected_dir}\"")));
     });
 }
 

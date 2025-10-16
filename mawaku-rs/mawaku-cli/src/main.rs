@@ -2,6 +2,7 @@ use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init, save};
 use mawaku_gemini::generate_image;
 use mawaku_image::{SaveImageOptions, save_base64_image};
+use std::path::PathBuf;
 
 const GEMINI_KEY_WARNING: &str =
     "Warning: GEMINI_API_KEY is not set. Use `mawaku --set-gemini-api-key <KEY>` to configure it.";
@@ -53,11 +54,12 @@ fn main() {
                         let display_index = index + 1;
                         match prediction.bytes_base64_encoded.as_deref() {
                             Some(encoded) => {
-                                let file_stem = format!("mawaku-prediction-{display_index}");
+                                let file_stem = format!("mawaku-generated-{display_index}");
+                                let output_dir = context.image_output_dir.as_deref();
                                 let options = SaveImageOptions {
                                     file_stem: Some(file_stem.as_str()),
                                     mime_type: prediction.mime_type.as_deref(),
-                                    output_dir: None,
+                                    output_dir,
                                 };
 
                                 match save_base64_image(encoded, options) {
@@ -99,6 +101,7 @@ struct RunContext {
     warnings: Vec<String>,
     gemini_api_key: Option<String>,
     config_ready: bool,
+    image_output_dir: Option<PathBuf>,
 }
 
 fn run(cli: Cli) -> RunContext {
@@ -141,6 +144,7 @@ fn run(cli: Cli) -> RunContext {
 
             let prompt_value = prompt.unwrap_or_else(|| config.default_prompt.clone());
             let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
+            let image_output_dir = Some(PathBuf::from(&config.image_output_dir));
 
             RunContext {
                 prompt: prompt_value,
@@ -148,6 +152,7 @@ fn run(cli: Cli) -> RunContext {
                 warnings,
                 gemini_api_key,
                 config_ready: true,
+                image_output_dir,
             }
         }
         Err(error) => {
@@ -171,6 +176,7 @@ fn run(cli: Cli) -> RunContext {
 
             let prompt_value = prompt.unwrap_or_else(|| config.default_prompt.clone());
             let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
+            let image_output_dir = Some(PathBuf::from(&config.image_output_dir));
 
             RunContext {
                 prompt: prompt_value,
@@ -178,6 +184,7 @@ fn run(cli: Cli) -> RunContext {
                 warnings,
                 gemini_api_key,
                 config_ready: false,
+                image_output_dir,
             }
         }
     }

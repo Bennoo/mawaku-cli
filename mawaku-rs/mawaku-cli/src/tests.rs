@@ -1,5 +1,5 @@
 use super::*;
-use mawaku_config::DEFAULT_GEMINI_API_KEY;
+use mawaku_config::{DEFAULT_GEMINI_API_KEY, DEFAULT_PROMPT};
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -89,6 +89,11 @@ fn run_warns_when_gemini_key_missing() {
         assert_eq!(context.prompt, DEFAULT_PROMPT);
         assert!(context.config_ready);
         assert!(context.gemini_api_key.is_none());
+        let expected_dir = home.join(".mawaku");
+        assert_eq!(
+            context.image_output_dir.as_deref(),
+            Some(expected_dir.as_path())
+        );
         assert!(
             context
                 .warnings
@@ -96,9 +101,13 @@ fn run_warns_when_gemini_key_missing() {
                 .any(|warning| warning.contains("GEMINI_API_KEY is not set"))
         );
 
-        let config_path = home.join(".mawaku").join("config.toml");
+        let config_path = expected_dir.join("config.toml");
         let contents = fs::read_to_string(config_path).expect("config written");
         assert!(contents.contains(&format!("gemini_api_key = \"{}\"", DEFAULT_GEMINI_API_KEY)));
+        assert!(contents.contains(&format!(
+            "image_output_dir = \"{}\"",
+            expected_dir.to_string_lossy()
+        )));
     });
 }
 
@@ -125,10 +134,19 @@ fn run_updates_gemini_key_and_suppresses_warning() {
 
         assert!(context.config_ready);
         assert_eq!(context.gemini_api_key.as_deref(), Some("secret-key"));
+        let expected_dir = home.join(".mawaku");
+        assert_eq!(
+            context.image_output_dir.as_deref(),
+            Some(expected_dir.as_path())
+        );
 
-        let config_path = home.join(".mawaku").join("config.toml");
+        let config_path = expected_dir.join("config.toml");
         let contents = fs::read_to_string(&config_path).expect("config written");
         assert!(contents.contains("gemini_api_key = \"secret-key\""));
+        assert!(contents.contains(&format!(
+            "image_output_dir = \"{}\"",
+            expected_dir.to_string_lossy()
+        )));
 
         let second_run = run(Cli {
             prompt: None,
@@ -144,5 +162,9 @@ fn run_updates_gemini_key_and_suppresses_warning() {
         assert!(second_run.config_ready);
         assert_eq!(second_run.gemini_api_key.as_deref(), Some("secret-key"));
         assert_eq!(second_run.prompt, DEFAULT_PROMPT);
+        assert_eq!(
+            second_run.image_output_dir.as_deref(),
+            Some(expected_dir.as_path())
+        );
     });
 }
