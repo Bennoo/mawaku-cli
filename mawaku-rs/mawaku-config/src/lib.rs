@@ -79,3 +79,14 @@ fn config_file_path() -> Result<PathBuf, ConfigError> {
     let base_dirs = BaseDirs::new().ok_or(ConfigError::ConfigDirUnavailable)?;
     Ok(base_dirs.home_dir().join(".mawaku").join("config.toml"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn config_default_uses_default_prompt() {
+        // Ensure the Config::default implementation returns the DEFAULT_PROMPT value.
+        assert_eq!(Config::default().default_prompt, DEFAULT_PROMPT);
+    }
+}
