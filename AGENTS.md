@@ -5,6 +5,7 @@
 - The CLI crate lives in `mawaku-rs/mawaku-cli`; `src/main.rs` exposes the Clap-based entrypoint and handles prompt selection.
 - Shared configuration code (including config file discovery and defaults) is in `mawaku-rs/mawaku-config/src/lib.rs`.
 - Create integration tests under `mawaku-rs/tests/` (auto-discovered by Cargo) and sample prompts or fixtures inside `mawaku-rs/fixtures/` if needed.
+- Keep crate source files focused on production code. Place unit test modules in dedicated sibling files (e.g., `src/tests.rs`) and reference them from the main module with `#[cfg(test)] mod tests;` to avoid bloating primary source files.
 - Keep generated assets out of version control; prefer referencing reproducible commands instead.
 
 ## Build, Test, and Development Commands
@@ -19,7 +20,7 @@
 - Keep CLI arguments descriptive (e.g., `--prompt`) and document them with Clap attributes. The CLI should gracefully fall back to config defaults when flags are omitted.
 
 ## Testing Guidelines
-- Co-locate lightweight unit tests below the function they cover using Rust’s `#[cfg(test)]` pattern.
+- Keep unit tests in the dedicated `tests` modules that mirror each crate’s main source file (see guidance above) so production files remain concise while still using Rust’s `#[cfg(test)]` pattern.
 - Place scenario-level tests in `mawaku-rs/tests/` to exercise the CLI end-to-end via `assert_cmd`.
 - Aim to cover argument parsing, configuration fallbacks, prompt rewriting, and provider selection logic as those features mature.
 
