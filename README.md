@@ -32,11 +32,6 @@ Future versions will connect to image generation providers (Google, OpenAI, etc.
 
 Rust 1.76+ is recommended. Install the toolchain with [rustup](https://rustup.rs/) and use `cargo check` while building new features.
 
-The repository is organized as a Rust workspace:
-
-- `mawaku-rs/mawaku-cli`: the Clap-based binary crate.
-- `mawaku-rs/mawaku-config`: shared configuration utilities for locating and seeding the config file.
-
 ### Devcontainer usage
 
 The repository ships with a VS Code / Dev Containers setup under `.devcontainer/`. To work inside it:
