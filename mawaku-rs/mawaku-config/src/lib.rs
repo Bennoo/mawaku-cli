@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use directories::ProjectDirs;
+use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -76,7 +76,6 @@ fn ensure_parent_exists(path: &Path) -> Result<(), ConfigError> {
 }
 
 fn config_file_path() -> Result<PathBuf, ConfigError> {
-    let project_dirs =
-        ProjectDirs::from("com", "Mawaku", "mawaku").ok_or(ConfigError::ConfigDirUnavailable)?;
-    Ok(project_dirs.config_dir().join("config.toml"))
+    let base_dirs = BaseDirs::new().ok_or(ConfigError::ConfigDirUnavailable)?;
+    Ok(base_dirs.home_dir().join(".mawaku").join("config.toml"))
 }

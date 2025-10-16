@@ -28,3 +28,4 @@
 - Group related changes in a single commit; avoid mixing refactors with feature work.
 - Pull requests should summarize the problem, the solution, and testing performed; link to tracking issues or product specs when available.
 - Provide CLI screenshots or sample outputs when behavior changes, especially for help text or new subcommands.
+- When a change impacts user-facing behavior, configuration defaults, or setup instructions, update the README (or other relevant docs) in the same patch.
