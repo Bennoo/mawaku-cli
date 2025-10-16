@@ -14,7 +14,7 @@ By default the CLI prints the active background prompt. Pass `--prompt "Describe
 
 ## Configuration
 
-Mawaku persists its defaults in a user-level config file (created on first run) via the `mawaku-config` crate. The file lives under your platform’s standard config directory (for example `~/Library/Application Support/com.Mawaku/mawaku/config.toml` on macOS). Whenever the CLI has no `--prompt` flag, it falls back to the `default_prompt` stored in that file and prints it to stdout.
+Mawaku persists its defaults in a user-level config file (created on first run) via the `mawaku-config` crate. The file lives at `~/.mawaku/config.toml`, ensuring the CLI keeps its settings directly under your home directory across operating systems. Whenever the CLI has no `--prompt` flag, it falls back to the `default_prompt` stored in that file and prints it to stdout.
 
 To reset to the built-in default, delete the config file and rerun the CLI; a fresh file will be created with the stock prompt.
 
