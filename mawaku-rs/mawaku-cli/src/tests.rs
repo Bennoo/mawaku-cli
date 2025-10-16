@@ -87,6 +87,8 @@ fn run_warns_when_gemini_key_missing() {
         });
 
         assert_eq!(context.prompt, DEFAULT_PROMPT);
+        assert!(context.config_ready);
+        assert!(context.gemini_api_key.is_none());
         assert!(
             context
                 .warnings
@@ -121,6 +123,9 @@ fn run_updates_gemini_key_and_suppresses_warning() {
                 .any(|warning| warning.contains("GEMINI_API_KEY is not set"))
         );
 
+        assert!(context.config_ready);
+        assert_eq!(context.gemini_api_key.as_deref(), Some("secret-key"));
+
         let config_path = home.join(".mawaku").join("config.toml");
         let contents = fs::read_to_string(&config_path).expect("config written");
         assert!(contents.contains("gemini_api_key = \"secret-key\""));
@@ -136,6 +141,8 @@ fn run_updates_gemini_key_and_suppresses_warning() {
                 .iter()
                 .any(|warning| warning.contains("GEMINI_API_KEY is not set"))
         );
+        assert!(second_run.config_ready);
+        assert_eq!(second_run.gemini_api_key.as_deref(), Some("secret-key"));
         assert_eq!(second_run.prompt, DEFAULT_PROMPT);
     });
 }

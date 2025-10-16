@@ -1,5 +1,6 @@
 use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init, save};
+use mawaku_gemini::generate_image;
 
 const GEMINI_KEY_WARNING: &str =
     "Warning: GEMINI_API_KEY is not set. Use `mawaku --set-gemini-api-key <KEY>` to configure it.";
@@ -38,6 +39,22 @@ fn main() {
         eprintln!("{warning}");
     }
 
+    if context.config_ready {
+        if let Some(api_key) = context.gemini_api_key.as_deref() {
+            match generate_image(api_key, &context.prompt) {
+                Ok(response) => {
+                    eprintln!(
+                        "Gemini generated {} prediction(s).",
+                        response.predictions.len()
+                    );
+                }
+                Err(error) => {
+                    eprintln!("Warning: failed to generate image via Gemini ({error}).");
+                }
+            }
+        }
+    }
+
     println!("{}", context.prompt);
 }
 
@@ -46,6 +63,8 @@ struct RunContext {
     prompt: String,
     infos: Vec<String>,
     warnings: Vec<String>,
+    gemini_api_key: Option<String>,
+    config_ready: bool,
 }
 
 fn run(cli: Cli) -> RunContext {
@@ -81,16 +100,20 @@ fn run(cli: Cli) -> RunContext {
                 }
             }
 
-            if config.gemini_api_key.trim().is_empty() {
+            let has_api_key = !config.gemini_api_key.trim().is_empty();
+            if !has_api_key {
                 warnings.push(GEMINI_KEY_WARNING.to_string());
             }
 
             let prompt_value = prompt.unwrap_or_else(|| config.default_prompt.clone());
+            let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
 
             RunContext {
                 prompt: prompt_value,
                 infos,
                 warnings,
+                gemini_api_key,
+                config_ready: true,
             }
         }
         Err(error) => {
@@ -107,16 +130,20 @@ fn run(cli: Cli) -> RunContext {
 
             let config = Config::default();
 
-            if config.gemini_api_key.trim().is_empty() {
+            let has_api_key = !config.gemini_api_key.trim().is_empty();
+            if !has_api_key {
                 warnings.push(GEMINI_KEY_WARNING.to_string());
             }
 
             let prompt_value = prompt.unwrap_or_else(|| config.default_prompt.clone());
+            let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
 
             RunContext {
                 prompt: prompt_value,
                 infos,
                 warnings,
+                gemini_api_key,
+                config_ready: false,
             }
         }
     }

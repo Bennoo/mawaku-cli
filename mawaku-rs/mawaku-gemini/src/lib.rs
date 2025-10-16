@@ -1,10 +1,7 @@
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use thiserror::Error;
 
-pub const DEFAULT_LOCATION: &str = "europe-west2";
-pub const DEFAULT_PROJECT_ID: &str = "fake-cloud-project";
 pub const DEFAULT_MODEL_VERSION: &str = "imagen-4.0-generate-001";
 pub const DEFAULT_SAMPLE_COUNT: u32 = 2;
 
@@ -19,7 +16,15 @@ pub enum GeminiError {
 #[derive(Debug, Deserialize)]
 pub struct PredictResponse {
     #[serde(default)]
-    pub predictions: Vec<Value>,
+    pub predictions: Vec<PredictPrediction>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PredictPrediction {
+    #[serde(rename = "bytesBase64Encoded")]
+    pub bytes_base64_encoded: Option<String>,
+    #[serde(rename = "mimeType")]
+    pub mime_type: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -48,20 +53,17 @@ impl<'a> PredictRequest<'a> {
     }
 }
 
-fn endpoint_url(project_id: &str, location: &str) -> String {
+fn endpoint_url() -> String {
     format!(
-        "https://{location}-aiplatform.googleapis.com/v1/projects/{project_id}/locations/{location}/publishers/google/models/{model_version}:predict",
-        location = location,
-        project_id = project_id,
+        "https://generativelanguage.googleapis.com/v1beta/models/{model_version}:predict",
         model_version = DEFAULT_MODEL_VERSION
     )
 }
 
 /// Submit an image generation request to Gemini's Imagen 4 API.
 ///
-/// The request is dispatched to the default `europe-west2` location using a fake
-/// project identifier to keep the initial implementation simple. Future
-/// iterations can expose configuration hooks for these values.
+/// The request targets Gemini's hosted Imagen 4 endpoint. Future iterations can
+/// expose configuration hooks for model selection and regional routing.
 ///
 /// # Errors
 ///
@@ -73,7 +75,7 @@ pub fn generate_image(api_key: &str, prompt: &str) -> Result<PredictResponse, Ge
     }
 
     let client = Client::new();
-    let url = endpoint_url(DEFAULT_PROJECT_ID, DEFAULT_LOCATION);
+    let url = endpoint_url();
     let request_body = PredictRequest::new(prompt, DEFAULT_SAMPLE_COUNT);
 
     let response = client
@@ -112,7 +114,30 @@ mod tests {
 
     #[test]
     fn endpoint_uses_defaults() {
-        let expected = "https://europe-west2-aiplatform.googleapis.com/v1/projects/fake-cloud-project/locations/europe-west2/publishers/google/models/imagen-4.0-generate-001:predict";
-        assert_eq!(endpoint_url(DEFAULT_PROJECT_ID, DEFAULT_LOCATION), expected);
+        let expected =
+            "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict";
+        assert_eq!(endpoint_url(), expected);
+    }
+
+    #[test]
+    fn parses_prediction_payload_with_base64() {
+        let json = r#"
+        {
+            "predictions": [
+                {
+                    "bytesBase64Encoded": "aGVsbG8=",
+                    "mimeType": "image/png"
+                }
+            ]
+        }
+        "#;
+
+        let response: PredictResponse =
+            serde_json::from_str(json).expect("parse example response");
+        assert_eq!(response.predictions.len(), 1);
+
+        let prediction = &response.predictions[0];
+        assert_eq!(prediction.bytes_base64_encoded.as_deref(), Some("aGVsbG8="));
+        assert_eq!(prediction.mime_type.as_deref(), Some("image/png"));
     }
 }
