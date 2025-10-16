@@ -12,4 +12,4 @@ categories = ["command-line-utilities"]
 clap = { workspace = true }
 mawaku-config = { path = "../mawaku-config" }
 mawaku-gemini = { path = "../mawaku-gemini" }
-
+mawaku-image = { path = "../mawaku-image" }

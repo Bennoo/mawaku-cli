@@ -679,6 +679,7 @@ dependencies = [
  "clap",
  "mawaku-config",
  "mawaku-gemini",
+ "mawaku-image",
 ]
 
 [[package]]
@@ -698,6 +699,14 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "mawaku-image"
+version = "0.1.0"
+dependencies = [
+ "base64",
  "thiserror",
 ]
 

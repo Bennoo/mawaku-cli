@@ -114,8 +114,7 @@ mod tests {
 
     #[test]
     fn endpoint_uses_defaults() {
-        let expected =
-            "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict";
+        let expected = "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict";
         assert_eq!(endpoint_url(), expected);
     }
 
@@ -132,8 +131,7 @@ mod tests {
         }
         "#;
 
-        let response: PredictResponse =
-            serde_json::from_str(json).expect("parse example response");
+        let response: PredictResponse = serde_json::from_str(json).expect("parse example response");
         assert_eq!(response.predictions.len(), 1);
 
         let prediction = &response.predictions[0];

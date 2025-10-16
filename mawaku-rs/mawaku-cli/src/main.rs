@@ -1,6 +1,7 @@
 use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init, save};
 use mawaku_gemini::generate_image;
+use mawaku_image::{SaveImageOptions, save_base64_image};
 
 const GEMINI_KEY_WARNING: &str =
     "Warning: GEMINI_API_KEY is not set. Use `mawaku --set-gemini-api-key <KEY>` to configure it.";
@@ -47,6 +48,39 @@ fn main() {
                         "Gemini generated {} prediction(s).",
                         response.predictions.len()
                     );
+
+                    for (index, prediction) in response.predictions.iter().enumerate() {
+                        let display_index = index + 1;
+                        match prediction.bytes_base64_encoded.as_deref() {
+                            Some(encoded) => {
+                                let file_stem = format!("mawaku-prediction-{display_index}");
+                                let options = SaveImageOptions {
+                                    file_stem: Some(file_stem.as_str()),
+                                    mime_type: prediction.mime_type.as_deref(),
+                                    output_dir: None,
+                                };
+
+                                match save_base64_image(encoded, options) {
+                                    Ok(path) => {
+                                        eprintln!(
+                                            "Saved prediction #{display_index} to {}",
+                                            path.display()
+                                        );
+                                    }
+                                    Err(error) => {
+                                        eprintln!(
+                                            "Warning: failed to save prediction #{display_index} ({error})."
+                                        );
+                                    }
+                                }
+                            }
+                            None => {
+                                eprintln!(
+                                    "Warning: prediction #{display_index} did not include encoded image bytes."
+                                );
+                            }
+                        }
+                    }
                 }
                 Err(error) => {
                     eprintln!("Warning: failed to generate image via Gemini ({error}).");
