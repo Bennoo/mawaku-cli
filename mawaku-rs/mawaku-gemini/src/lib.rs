@@ -78,7 +78,7 @@ pub fn generate_image(api_key: &str, prompt: &str) -> Result<PredictResponse, Ge
 
     let response = client
         .post(url)
-        .bearer_auth(api_key)
+        .header("x-goog-api-key", api_key)
         .json(&request_body)
         .send()?;
 
