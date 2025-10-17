@@ -14,6 +14,27 @@ fn serialize_request_matches_expected_shape() {
 }
 
 #[test]
+fn craft_prompt_builds_contextual_description() {
+    let prompt = craft_prompt(
+        "Base instructions.",
+        "Lisbon, Portugal",
+        Some("spring"),
+        Some("golden hour"),
+    );
+
+    assert!(prompt.contains("Base instructions."));
+    assert!(prompt.contains("Lisbon, Portugal"));
+    assert!(prompt.contains("spring"));
+    assert!(prompt.contains("golden hour"));
+}
+
+#[test]
+fn craft_prompt_ignores_empty_inputs() {
+    let prompt = craft_prompt("  ", "   ", Some("  "), Some(""));
+    assert!(prompt.is_empty());
+}
+
+#[test]
 fn empty_api_key_is_rejected() {
     let error = generate_image("   ", "workspace").expect_err("missing key");
     assert!(matches!(error, GeminiError::MissingApiKey));
@@ -21,7 +42,8 @@ fn empty_api_key_is_rejected() {
 
 #[test]
 fn endpoint_uses_defaults() {
-    let expected = "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict";
+    let expected =
+        "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict";
     assert_eq!(endpoint_url(), expected);
 }
 

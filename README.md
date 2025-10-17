@@ -10,7 +10,11 @@ From the `mawaku-rs/` workspace root, run:
 cargo run -p mawaku -- --help
 ```
 
-By default the CLI prints the active background prompt. Pass `--prompt "Describe your scene"` to override the configured value for a single run.
+By default the CLI prints the background prompt composed from your inputs. Provide the required location plus optional season and time of day, for example:
+
+```bash
+cargo run -p mawaku -- --location "Lisbon, Portugal" --season spring --time-of-day dusk
+```
 
 To persist your Gemini API credential, run:
 
@@ -22,7 +26,7 @@ The CLI will warn on startup if the `GEMINI_API_KEY` remains empty.
 
 ## Configuration
 
-Mawaku persists its defaults in a user-level config file (created on first run) via the `mawaku-config` crate. The file lives at `~/.mawaku/config.toml`, ensuring the CLI keeps its settings directly under your home directory across operating systems. Whenever the CLI has no `--prompt` flag, it falls back to the `default_prompt` stored in that file and prints it to stdout. The same file now stores an optional `gemini_api_key` entry so that the CLI can connect to Gemini without prompting for the credential every run.
+Mawaku persists its defaults in a user-level config file (created on first run) via the `mawaku-config` crate. The file lives at `~/.mawaku/config.toml`, ensuring the CLI keeps its settings directly under your home directory across operating systems. Each execution uses the `default_prompt` stored in that file as the styling foundation before layering on your location, season, and time-of-day inputs. The same file now stores an optional `gemini_api_key` entry so that the CLI can connect to Gemini without prompting for the credential every run.
 
 To reset to the built-in default, delete the config file and rerun the CLI; a fresh file will be created with the stock prompt.
 
