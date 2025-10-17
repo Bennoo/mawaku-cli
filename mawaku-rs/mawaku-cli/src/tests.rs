@@ -1,5 +1,6 @@
 use super::*;
 use mawaku_config::{DEFAULT_GEMINI_API_KEY, DEFAULT_PROMPT};
+use mawaku_gemini::craft_prompt;
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -82,11 +83,14 @@ fn remove_env(key: &str) {
 fn run_warns_when_gemini_key_missing() {
     with_isolated_home(|home| {
         let context = run(Cli {
-            prompt: None,
+            location: "Hakone, Japan".to_string(),
+            season: None,
+            time_of_day: None,
             set_gemini_api_key: None,
         });
 
-        assert_eq!(context.prompt, DEFAULT_PROMPT);
+        let expected_prompt = craft_prompt(DEFAULT_PROMPT, "Hakone, Japan", None, None);
+        assert_eq!(context.prompt, expected_prompt);
         assert!(context.config_ready);
         assert!(context.gemini_api_key.is_none());
         let expected_dir = home.join(".mawaku");
@@ -108,6 +112,10 @@ fn run_warns_when_gemini_key_missing() {
             "image_output_dir = \"{}\"",
             expected_dir.to_string_lossy()
         )));
+        assert!(
+            !contents.contains("default_prompt"),
+            "default_prompt should no longer be stored in the config file"
+        );
     });
 }
 
@@ -115,7 +123,9 @@ fn run_warns_when_gemini_key_missing() {
 fn run_updates_gemini_key_and_suppresses_warning() {
     with_isolated_home(|home| {
         let context = run(Cli {
-            prompt: None,
+            location: "Hakone, Japan".to_string(),
+            season: None,
+            time_of_day: None,
             set_gemini_api_key: Some("secret-key".to_string()),
         });
 
@@ -147,9 +157,15 @@ fn run_updates_gemini_key_and_suppresses_warning() {
             "image_output_dir = \"{}\"",
             expected_dir.to_string_lossy()
         )));
+        assert!(
+            !contents.contains("default_prompt"),
+            "default_prompt should no longer be stored in the config file"
+        );
 
         let second_run = run(Cli {
-            prompt: None,
+            location: "Hakone, Japan".to_string(),
+            season: None,
+            time_of_day: None,
             set_gemini_api_key: None,
         });
 
@@ -161,7 +177,8 @@ fn run_updates_gemini_key_and_suppresses_warning() {
         );
         assert!(second_run.config_ready);
         assert_eq!(second_run.gemini_api_key.as_deref(), Some("secret-key"));
-        assert_eq!(second_run.prompt, DEFAULT_PROMPT);
+        let expected_prompt = craft_prompt(DEFAULT_PROMPT, "Hakone, Japan", None, None);
+        assert_eq!(second_run.prompt, expected_prompt);
         assert_eq!(
             second_run.image_output_dir.as_deref(),
             Some(expected_dir.as_path())

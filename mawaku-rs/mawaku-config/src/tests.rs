@@ -9,12 +9,6 @@ static TEST_MUTEX: Mutex<()> = Mutex::new(());
 static TEMP_DIR_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 #[test]
-fn config_default_uses_default_prompt() {
-    // Ensure the Config::default implementation returns the DEFAULT_PROMPT value.
-    assert_eq!(Config::default().default_prompt, DEFAULT_PROMPT);
-}
-
-#[test]
 fn config_default_uses_empty_gemini_api_key() {
     assert!(Config::default().gemini_api_key.is_empty());
 }
@@ -36,6 +30,7 @@ fn load_or_init_creates_file_with_empty_gemini_api_key() {
         let contents = fs::read_to_string(outcome.path).expect("read config");
         assert!(contents.contains("gemini_api_key = \"\""));
         assert!(contents.contains("image_output_dir ="));
+        assert!(!contents.contains("default_prompt"));
     });
 }
 
@@ -61,6 +56,7 @@ gemini_api_key = ""
 
         let contents = fs::read_to_string(&path).expect("read config");
         assert!(contents.contains(&format!("image_output_dir = \"{expected_dir}\"")));
+        assert!(!contents.contains("default_prompt"));
     });
 }
 

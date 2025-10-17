@@ -1,6 +1,6 @@
 use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init, save};
-use mawaku_gemini::{generate_image, GeminiError, PredictResponse};
+use mawaku_gemini::{GeminiError, PredictResponse, craft_prompt, generate_image};
 use mawaku_image::{SaveImageOptions, save_base64_image};
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -23,9 +23,15 @@ const GEMINI_KEY_WARNING: &str =
     long_about = None
 )]
 struct Cli {
-    /// Describe the workspace background you want to generate.
-    #[arg(long, value_name = "TEXT")]
-    prompt: Option<String>,
+    /// Location that should anchor the generated background.
+    #[arg(long, value_name = "LOCATION")]
+    location: String,
+    /// Optional season that informs the ambience of the scene.
+    #[arg(long, value_name = "SEASON")]
+    season: Option<String>,
+    /// Optional time of day to tailor the lighting of the scene.
+    #[arg(long = "time-of-day", value_name = "TIME")]
+    time_of_day: Option<String>,
     /// Set the Gemini API key persisted in the Mawaku config file.
     #[arg(long, value_name = "KEY")]
     set_gemini_api_key: Option<String>,
@@ -154,7 +160,9 @@ struct RunContext {
 
 fn run(cli: Cli) -> RunContext {
     let Cli {
-        prompt,
+        location,
+        season,
+        time_of_day,
         set_gemini_api_key,
     } = cli;
 
@@ -165,7 +173,7 @@ fn run(cli: Cli) -> RunContext {
         Ok(outcome) => {
             if outcome.created {
                 infos.push(format!(
-                    "Created Mawaku configuration at {} with the default prompt: \"{DEFAULT_PROMPT}\"",
+                    "Created Mawaku configuration at {}",
                     outcome.path.display()
                 ));
             }
@@ -190,7 +198,12 @@ fn run(cli: Cli) -> RunContext {
                 warnings.push(GEMINI_KEY_WARNING.to_string());
             }
 
-            let prompt_value = prompt.unwrap_or_else(|| config.default_prompt.clone());
+            let prompt_value = craft_prompt(
+                DEFAULT_PROMPT,
+                &location,
+                season.as_deref(),
+                time_of_day.as_deref(),
+            );
             let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
             let image_output_dir = Some(PathBuf::from(&config.image_output_dir));
 
@@ -222,7 +235,12 @@ fn run(cli: Cli) -> RunContext {
                 warnings.push(GEMINI_KEY_WARNING.to_string());
             }
 
-            let prompt_value = prompt.unwrap_or_else(|| config.default_prompt.clone());
+            let prompt_value = craft_prompt(
+                DEFAULT_PROMPT,
+                &location,
+                season.as_deref(),
+                time_of_day.as_deref(),
+            );
             let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
             let image_output_dir = Some(PathBuf::from(&config.image_output_dir));
 
