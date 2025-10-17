@@ -173,7 +173,7 @@ fn run(cli: Cli) -> RunContext {
         Ok(outcome) => {
             if outcome.created {
                 infos.push(format!(
-                    "Created Mawaku configuration at {} with the default prompt: \"{DEFAULT_PROMPT}\"",
+                    "Created Mawaku configuration at {}",
                     outcome.path.display()
                 ));
             }
@@ -199,7 +199,7 @@ fn run(cli: Cli) -> RunContext {
             }
 
             let prompt_value = craft_prompt(
-                &config.default_prompt,
+                DEFAULT_PROMPT,
                 &location,
                 season.as_deref(),
                 time_of_day.as_deref(),
@@ -236,7 +236,7 @@ fn run(cli: Cli) -> RunContext {
             }
 
             let prompt_value = craft_prompt(
-                &config.default_prompt,
+                DEFAULT_PROMPT,
                 &location,
                 season.as_deref(),
                 time_of_day.as_deref(),

@@ -6,8 +6,9 @@ use std::{
 use directories::BaseDirs;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use toml::Value;
 
-pub const DEFAULT_PROMPT: &str = "A hyper photo realistic unique background for a video call. Don't place me in the frame; the goal is to use the scene as a virtual background in applications like Zoom. Highlight a cosy, lived-in interior with realistic proportions and warm details.";
+pub const DEFAULT_PROMPT: &str = "A hyper photo realistic unique background for a video call. Don't place me in the frame; the goal is to use the scene as a virtual background in applications like Zoom. Highlight a cosy, lived-in interior with realistic proportions and warm details. Camera height is around eye level when sitting.";
 pub const DEFAULT_GEMINI_API_KEY: &str = "";
 
 #[derive(Debug, Error)]
@@ -25,7 +26,6 @@ pub enum ConfigError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
-    pub default_prompt: String,
     pub gemini_api_key: String,
     pub image_output_dir: String,
 }
@@ -33,7 +33,6 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            default_prompt: DEFAULT_PROMPT.to_string(),
             gemini_api_key: DEFAULT_GEMINI_API_KEY.to_string(),
             image_output_dir: default_image_output_dir().unwrap_or_else(|_| ".".to_string()),
         }
@@ -46,14 +45,32 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
 
     if path.exists() {
         let contents = fs::read_to_string(&path)?;
-        let mut config: Config = toml::from_str(&contents)?;
+        let mut value: Value = toml::from_str(&contents)?;
+        let mut should_rewrite = false;
+
+        if let Value::Table(ref mut table) = value {
+            if table.remove("default_prompt").is_some() {
+                should_rewrite = true;
+            }
+        }
+
+        let is_image_dir_missing_or_invalid = match value.get("image_output_dir") {
+            Some(Value::String(value)) => value.trim().is_empty(),
+            Some(_) => true,
+            None => true,
+        };
+
+        let mut config: Config = value.try_into()?;
         let expected_dir = default_image_output_dir_for(&path);
 
-        let missing_field = !contents.contains("image_output_dir");
         let empty_field = config.image_output_dir.trim().is_empty();
 
-        if missing_field || empty_field {
+        if is_image_dir_missing_or_invalid || empty_field {
             config.image_output_dir = expected_dir;
+            should_rewrite = true;
+        }
+
+        if should_rewrite {
             save(&config, &path)?;
         }
 

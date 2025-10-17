@@ -7,8 +7,51 @@
             "request": "launch",
             "preLaunchTask": "cargo build",
             "program": "${workspaceFolder}/mawaku-rs/target/debug/mawaku",
-            "args": [],
+            "args": [
+                "--location",
+                "Kyoto, Tokyo",
+                "--season",
+                "Autumn",
+                "--time-of-day",
+                "Evening"
+            ],
             "cwd": "${workspaceFolder}/mawaku-rs"
+        },
+        {
+            "name": "Debug mawaku (custom args)",
+            "type": "lldb",
+            "request": "launch",
+            "preLaunchTask": "cargo build",
+            "program": "${workspaceFolder}/mawaku-rs/target/debug/mawaku",
+            "args": [
+                "--location",
+                "${input:location}",
+                "--season",
+                "${input:season}",
+                "--time-of-day",
+                "${input:timeOfDay}"
+            ],
+            "cwd": "${workspaceFolder}/mawaku-rs"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "location",
+            "type": "promptString",
+            "description": "Enter location(s)",
+            "default": "Kyoto, Tokyo"
+        },
+        {
+            "id": "season",
+            "type": "promptString",
+            "description": "Enter season",
+            "default": "Autumn"
+        },
+        {
+            "id": "timeOfDay",
+            "type": "promptString",
+            "description": "Enter time of day",
+            "default": "Evening"
         }
     ]
 }

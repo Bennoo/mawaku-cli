@@ -112,6 +112,10 @@ fn run_warns_when_gemini_key_missing() {
             "image_output_dir = \"{}\"",
             expected_dir.to_string_lossy()
         )));
+        assert!(
+            !contents.contains("default_prompt"),
+            "default_prompt should no longer be stored in the config file"
+        );
     });
 }
 
@@ -153,6 +157,10 @@ fn run_updates_gemini_key_and_suppresses_warning() {
             "image_output_dir = \"{}\"",
             expected_dir.to_string_lossy()
         )));
+        assert!(
+            !contents.contains("default_prompt"),
+            "default_prompt should no longer be stored in the config file"
+        );
 
         let second_run = run(Cli {
             location: "Hakone, Japan".to_string(),
