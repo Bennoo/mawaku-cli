@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub const DEFAULT_PROMPT: &str =
-    "A background image for a video call, showing a tidy, well-lit home office with a modern desk. The style is clean and minimalistic.";
+    "A hyper photo realistic unique background for a video call. Don't place me in the frame, the goal is to set that background in the zoom application.  I am in Hakone. In the background, a view on the back of the room with a window. The scale of the room behind me is realistic. The room is cosy and feels like a lived space.";
 pub const DEFAULT_GEMINI_API_KEY: &str = "";
 
 #[derive(Debug, Error)]
