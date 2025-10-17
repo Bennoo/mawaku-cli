@@ -26,11 +26,9 @@ The CLI will warn on startup if the `GEMINI_API_KEY` remains empty.
 
 ## Configuration
 
-Mawaku persists its defaults in a user-level config file (created on first run) via the `mawaku-config` crate. The file lives at `~/.mawaku/config.toml`, ensuring the CLI keeps its settings directly under your home directory across operating systems. Each execution uses the `default_prompt` stored in that file as the styling foundation before layering on your location, season, and time-of-day inputs. The same file now stores an optional `gemini_api_key` entry so that the CLI can connect to Gemini without prompting for the credential every run.
+Mawaku persists its defaults in a user-level config file (created on first run) via the `mawaku-config` crate. The file lives at `~/.mawaku/config.toml`, ensuring the CLI keeps its settings directly under your home directory across operating systems. The same file now stores an optional `gemini_api_key` entry so that the CLI can connect to Gemini without prompting for the credential every run.
 
 To reset to the built-in default, delete the config file and rerun the CLI; a fresh file will be created with the stock prompt.
-
-Future versions will connect to image generation providers (Google, OpenAI, etc.) based on the description you provide.
 
 ## Development
 
