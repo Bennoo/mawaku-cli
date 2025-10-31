@@ -8,3 +8,4 @@
 .devcontainer/auth.json
 .devcontainer/devcontainer.env
 .devcontainer/config.toml
+*.png
