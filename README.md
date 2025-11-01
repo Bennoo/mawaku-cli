@@ -34,6 +34,22 @@ To reset to the built-in default, delete the config file and rerun the CLI; a fr
 
 Rust 1.76+ is recommended. Install the toolchain with [rustup](https://rustup.rs/) and use `cargo check` while building new features.
 
+### Testing
+
+Run the full workspace test suite from the `mawaku-rs/` directory:
+
+```bash
+cargo test
+```
+
+To target the CLI crate specifically (including its unit tests), run:
+
+```bash
+cargo test -p mawaku
+```
+
+Append `-- --nocapture` if you want to see the CLI output during test runs.
+
 ### Devcontainer usage
 
 The repository ships with a VS Code / Dev Containers setup under `.devcontainer/`. To work inside it:
