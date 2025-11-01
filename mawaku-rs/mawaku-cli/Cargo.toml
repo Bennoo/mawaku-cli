@@ -13,3 +13,4 @@ clap = { workspace = true }
 mawaku-config = { path = "../mawaku-config" }
 mawaku-gemini = { path = "../mawaku-gemini" }
 mawaku-image = { path = "../mawaku-image" }
+rand = "0.8"
