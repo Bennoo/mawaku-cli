@@ -234,13 +234,50 @@ fn image_name_context_truncates_long_components() {
         component_token(&cli.location).expect("location component slug exists");
     assert_eq!(location_component, "extremely");
 
-    let season_component = component_token(cli.season.as_deref().unwrap())
-        .expect("season component slug exists");
+    let season_component =
+        component_token(cli.season.as_deref().unwrap()).expect("season component slug exists");
     assert_eq!(season_component.len(), PARAM_COMPONENT_MAX_LEN);
     assert_eq!(season_component, "supercalif");
 
-    let time_component = component_token(cli.time_of_day.as_deref().unwrap())
-        .expect("time component slug exists");
+    let time_component =
+        component_token(cli.time_of_day.as_deref().unwrap()).expect("time component slug exists");
     assert_eq!(time_component.len(), PARAM_COMPONENT_MAX_LEN);
     assert_eq!(time_component, "midnight-s");
+}
+
+#[test]
+fn build_structured_prompt_formats_sections() {
+    let description = PlaceDescription {
+        ambiance: "Warm mountain inn with panoramic views".to_string(),
+        items: vec!["tatami mats".to_string(), "shoji screens".to_string()],
+        keywords: vec!["serene".to_string(), "onsen".to_string()],
+    };
+
+    let prompt = build_structured_prompt(
+        "Follow the art direction guidelines.",
+        Some(&description),
+        Some("spring"),
+        Some("dusk"),
+    );
+
+    assert!(prompt.contains("Follow the art direction guidelines."));
+    assert!(prompt.contains("Complete place description:"));
+    assert!(prompt.contains("Ambiance: Warm mountain inn with panoramic views"));
+    assert!(prompt.contains("Items: tatami mats, shoji screens"));
+    assert!(prompt.contains("Keywords: serene, onsen"));
+    assert!(prompt.contains("Scene timing:"));
+    assert!(prompt.contains("Season: spring"));
+    assert!(prompt.contains("Time of day: dusk"));
+}
+
+#[test]
+fn build_structured_prompt_falls_back_to_placeholders() {
+    let prompt = build_structured_prompt("Guide the render artistically.", None, None, Some("   "));
+
+    assert!(prompt.contains("Guide the render artistically."));
+    assert!(prompt.contains("Ambiance: Unspecified"));
+    assert!(prompt.contains("Items: Unspecified"));
+    assert!(prompt.contains("Keywords: Unspecified"));
+    assert!(prompt.contains("Season: Unspecified"));
+    assert!(prompt.contains("Time of day: Unspecified"));
 }
