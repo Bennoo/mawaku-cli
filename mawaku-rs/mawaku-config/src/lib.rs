@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use toml::Value;
 
-pub const DEFAULT_PROMPT: &str = "A hyper photo-realistic unique background for a video call. Don't place any people in the frame; the goal is to use the scene as a virtual background in applications like Zoom. Highlight a cosy, lived-in and modern interior with realistic proportions and warm details. Camera height is around eye level when sitting.";
+pub const DEFAULT_PROMPT: &str = "A hyper photo-realistic unique background for a video call. Don't place any people in the frame; the goal is to use the scene as a virtual background in applications like Zoom. Highlight a cosy, lived-in and modern interior with realistic proportions and warm details. With a large window in the background. The camera height is around eye level when sitting.";
 pub const DEFAULT_GEMINI_API_KEY: &str = "";
 
 #[derive(Debug, Error)]
