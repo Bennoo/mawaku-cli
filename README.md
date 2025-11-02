@@ -37,6 +37,36 @@ Lantern-lit Santorini interiors with caldera views for a dramatic night backdrop
   <img src="docs/examples/mawaku-santorini-summer-night-p2-0S7LH.png" alt="Santorini night render 2" width="260" />
 </p>
 
+### Zermatt Midnight Chalet
+
+Run:
+
+```bash
+cargo run -p mawaku -- --location "Zermatt alpine village, Switzerland" --season winter --time-of-day midnight
+```
+
+Snow-dusted alpine interiors with Matterhorn views and warm midnight lighting.
+
+<p align="center">
+  <img src="docs/examples/mawaku-zermatt-al-winter-midnight-p1-1H3PX.png" alt="Zermatt winter midnight render 1" width="260" />
+  <img src="docs/examples/mawaku-zermatt-al-winter-midnight-p2-CHDG7.png" alt="Zermatt winter midnight render 2" width="260" />
+</p>
+
+### El Nido Monsoon Sunrise
+
+Run:
+
+```bash
+cargo run -p mawaku -- --location "El Nido lagoon, Palawan, Philippines" --season monsoon --time-of-day sunrise
+```
+
+Tropical lagoon loft awash in sunrise hues framed by karst cliffs and soft rain clouds.
+
+<p align="center">
+  <img src="docs/examples/mawaku-el-nido-la-monsoon-sunrise-p1-GF4DI.png" alt="El Nido monsoon sunrise render 1" width="260" />
+  <img src="docs/examples/mawaku-el-nido-la-monsoon-sunrise-p2-GRYDJ.png" alt="El Nido monsoon sunrise render 2" width="260" />
+</p>
+
 ## Getting Started
 
 From the `mawaku-rs/` workspace root, run:
