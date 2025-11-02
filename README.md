@@ -12,6 +12,20 @@ When executed with those parameters, the CLI produced the following background c
 ![Italian coastal village morning render 1](docs/examples/mawaku-italian-co-summer-morning-p1-TH6RX.png)
 ![Italian coastal village morning render 2](docs/examples/mawaku-italian-co-summer-morning-p2-XOKB0.png)
 
+Example Night Prompt
+=====================
+
+For a cozy night scene overlooking Santorini, run:
+
+```bash
+cargo run -p mawaku -- --location "Santorini, Greece" --season summer --time-of-day night
+```
+
+The CLI prints the composed prompt and saved these nighttime background candidates:
+
+![Santorini night render 1](docs/examples/mawaku-santorini-summer-night-p1-V3DAZ.png)
+![Santorini night render 2](docs/examples/mawaku-santorini-summer-night-p2-0S7LH.png)
+
 # Mawaku CLI
 
 Mawaku is a command-line interface that will grow into a toolkit for generating video call backgrounds from natural language prompts.
