@@ -1,6 +1,7 @@
 # Mawaku CLI
 
 Mawaku is a command-line interface that will grow into a toolkit for generating video call backgrounds from natural language prompts.
+Mawaku (fusion of 間 “ma” = space/pause + 枠 “waku” = frame) aims to simplify the process of creating personalized virtual backgrounds by leveraging AI image generation.
 
 ## Example Prompts
 
