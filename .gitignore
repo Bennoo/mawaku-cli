@@ -9,3 +9,6 @@
 .devcontainer/devcontainer.env
 .devcontainer/config.toml
 *.png
+# Allow example documentation images
+!docs/examples/*.png
+
