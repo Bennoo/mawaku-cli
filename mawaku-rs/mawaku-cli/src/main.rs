@@ -1,6 +1,9 @@
 use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init, save};
-use mawaku_gemini::{GeminiError, PredictResponse, craft_prompt, generate_image};
+use mawaku_gemini::{
+    GeminiError, PlaceDescription, PredictResponse, craft_prompt, generate_image,
+    generate_place_description,
+};
 use mawaku_image::{SaveImageOptions, save_base64_image};
 use rand::seq::SliceRandom;
 use std::io::{self, Write};
@@ -167,6 +170,79 @@ fn generate_image_with_progress(
     }
 }
 
+fn trimmed_or_none<'a>(input: Option<&'a str>) -> Option<&'a str> {
+    input.and_then(|value| {
+        let trimmed = value.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed)
+        }
+    })
+}
+
+fn list_or_unspecified(items: &[String]) -> String {
+    let filtered: Vec<&str> = items
+        .iter()
+        .map(|value| value.trim())
+        .filter(|value| !value.is_empty())
+        .collect();
+
+    if filtered.is_empty() {
+        "Unspecified".to_string()
+    } else {
+        filtered.join(", ")
+    }
+}
+
+fn format_context_line(label: &str, value: Option<&str>) -> String {
+    match trimmed_or_none(value) {
+        Some(text) => format!("{label}: {text}"),
+        None => format!("{label}: Unspecified"),
+    }
+}
+
+fn build_structured_prompt(
+    general_instructions: &str,
+    description: Option<&PlaceDescription>,
+    season: Option<&str>,
+    time_of_day: Option<&str>,
+) -> String {
+    let mut sections = Vec::new();
+
+    let instructions = general_instructions.trim();
+    if !instructions.is_empty() {
+        sections.push(instructions.to_string());
+    }
+
+    let place_section = match description {
+        Some(details) => {
+            let ambiance =
+                trimmed_or_none(Some(details.ambiance.as_str())).unwrap_or("Unspecified");
+            let items = list_or_unspecified(&details.items);
+            let keywords = list_or_unspecified(&details.keywords);
+            format!(
+                "Complete place description:\nUse one or many of these details:\nAmbiance: {}\nItems: {}\nKeywords: {}",
+                ambiance, items, keywords
+            )
+        }
+        None => {
+            "Complete place description:\nUse one or many of these details:\nAmbiance: Unspecified\nItems: Unspecified\nKeywords: Unspecified"
+                .to_string()
+        }
+    };
+    sections.push(place_section);
+
+    let timing_section = format!(
+        "Scene timing:\n{}\n{}",
+        format_context_line("Season", season),
+        format_context_line("Time of day", time_of_day),
+    );
+    sections.push(timing_section);
+
+    sections.join("\n\n")
+}
+
 fn main() {
     let cli = Cli::parse();
     let image_name_context = ImageNameContext::new(&cli);
@@ -181,9 +257,33 @@ fn main() {
         eprintln!("{warning}");
     }
 
+    let general_instructions = craft_prompt(DEFAULT_PROMPT, &context.location, None, None);
+    let mut prompt = build_structured_prompt(
+        general_instructions.as_str(),
+        None,
+        context.season.as_deref(),
+        context.time_of_day.as_deref(),
+    );
+
     if context.config_ready {
         if let Some(api_key) = context.gemini_api_key.as_deref() {
-            match generate_image_with_progress(api_key, &context.prompt) {
+            match generate_place_description(&context.location, api_key) {
+                Ok(description) => {
+                    eprintln!("Gemini place description: {}", description);
+                    prompt = build_structured_prompt(
+                        general_instructions.as_str(),
+                        Some(&description),
+                        context.season.as_deref(),
+                        context.time_of_day.as_deref(),
+                    );
+                }
+                Err(error) => {
+                    eprintln!(
+                        "Warning: failed to generate place description via Gemini ({error})."
+                    );
+                }
+            }
+            match generate_image_with_progress(api_key, &prompt) {
                 Some(Ok(response)) => {
                     eprintln!(
                         "Gemini generated {} prediction(s).",
@@ -234,17 +334,21 @@ fn main() {
         }
     }
 
-    println!("{}", context.prompt);
+    println!("{prompt}");
 }
 
 #[derive(Debug, Default)]
 struct RunContext {
+    #[cfg_attr(not(test), allow(dead_code))]
     prompt: String,
+    location: String,
     infos: Vec<String>,
     warnings: Vec<String>,
     gemini_api_key: Option<String>,
     config_ready: bool,
     image_output_dir: Option<PathBuf>,
+    season: Option<String>,
+    time_of_day: Option<String>,
 }
 
 fn run(cli: Cli) -> RunContext {
@@ -298,11 +402,14 @@ fn run(cli: Cli) -> RunContext {
 
             RunContext {
                 prompt: prompt_value,
+                location: location.to_string(),
                 infos,
                 warnings,
                 gemini_api_key,
                 config_ready: true,
                 image_output_dir,
+                season: season.clone(),
+                time_of_day: time_of_day.clone(),
             }
         }
         Err(error) => {
@@ -335,11 +442,14 @@ fn run(cli: Cli) -> RunContext {
 
             RunContext {
                 prompt: prompt_value,
+                location: location.to_string(),
                 infos,
                 warnings,
                 gemini_api_key,
                 config_ready: false,
                 image_output_dir,
+                season: season.clone(),
+                time_of_day: time_of_day.clone(),
             }
         }
     }
