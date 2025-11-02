@@ -222,12 +222,12 @@ fn build_structured_prompt(
             let items = list_or_unspecified(&details.items);
             let keywords = list_or_unspecified(&details.keywords);
             format!(
-                "Complete place description, use one or many of these details:\nAmbiance: {}\nItems: {}\nKeywords: {}",
+                "Complete place description:\nUse one or many of these details:\nAmbiance: {}\nItems: {}\nKeywords: {}",
                 ambiance, items, keywords
             )
         }
         None => {
-            "Complete place description, use one or many of these details:\nAmbiance: Unspecified\nItems: Unspecified\nKeywords: Unspecified"
+            "Complete place description:\nUse one or many of these details:\nAmbiance: Unspecified\nItems: Unspecified\nKeywords: Unspecified"
                 .to_string()
         }
     };
