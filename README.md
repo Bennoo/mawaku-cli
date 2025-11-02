@@ -6,34 +6,35 @@ Mawaku is a command-line interface that will grow into a toolkit for generating 
 
 > Inspiration for what Mawaku can craft from simple commands.
 
-<table>
-  <tr>
-    <th align="left">Italian Coastal Morning</th>
-    <th align="left">Santorini Nightscape</th>
-  </tr>
-  <tr>
-    <td>
-      <pre><code>cargo run -p mawaku -- --location "Italian coastal village" --season summer --time-of-day morning</code></pre>
-      <p>Sunlit coastal homes with warm interior touches—perfect for a fresh day-start vibe.</p>
-    </td>
-    <td>
-      <pre><code>cargo run -p mawaku -- --location "Santorini, Greece" --season summer --time-of-day night</code></pre>
-      <p>Lantern-lit Santorini interiors with caldera views for a dramatic night backdrop.</p>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <img src="docs/examples/mawaku-italian-co-summer-morning-p1-TH6RX.png" alt="Italian coastal morning render 1" width="300" />
-      <br />
-      <img src="docs/examples/mawaku-italian-co-summer-morning-p2-XOKB0.png" alt="Italian coastal morning render 2" width="300" />
-    </td>
-    <td>
-      <img src="docs/examples/mawaku-santorini-summer-night-p1-V3DAZ.png" alt="Santorini night render 1" width="300" />
-      <br />
-      <img src="docs/examples/mawaku-santorini-summer-night-p2-0S7LH.png" alt="Santorini night render 2" width="300" />
-    </td>
-  </tr>
-</table>
+### Italian Coastal Morning
+
+Run:
+
+```bash
+cargo run -p mawaku -- --location "Italian coastal village" --season summer --time-of-day morning
+```
+
+Sunlit coastal homes with warm interior touches—perfect for a fresh day-start vibe.
+
+<p align="center">
+  <img src="docs/examples/mawaku-italian-co-summer-morning-p1-TH6RX.png" alt="Italian coastal morning render 1" width="260" />
+  <img src="docs/examples/mawaku-italian-co-summer-morning-p2-XOKB0.png" alt="Italian coastal morning render 2" width="260" />
+</p>
+
+### Santorini Nightscape
+
+Run:
+
+```bash
+cargo run -p mawaku -- --location "Santorini, Greece" --season summer --time-of-day night
+```
+
+Lantern-lit Santorini interiors with caldera views for a dramatic night backdrop.
+
+<p align="center">
+  <img src="docs/examples/mawaku-santorini-summer-night-p1-V3DAZ.png" alt="Santorini night render 1" width="260" />
+  <img src="docs/examples/mawaku-santorini-summer-night-p2-0S7LH.png" alt="Santorini night render 2" width="260" />
+</p>
 
 ## Getting Started
 
