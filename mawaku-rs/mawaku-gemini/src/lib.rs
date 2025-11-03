@@ -2,7 +2,8 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-pub const DEFAULT_IMG_MODEL_VERSION: &str = "imagen-4.0-generate-001";
+// pub const DEFAULT_IMG_MODEL_VERSION: &str = "imagen-4.0-generate-001";
+pub const DEFAULT_IMG_MODEL_VERSION: &str = "imagen-4.0-ultra-generate-001";
 pub const DEFAULT_TEXT_MODEL_VERSION: &str = "gemini-2.5-flash";
 pub const DEFAULT_SAMPLE_COUNT: u32 = 2;
 pub const DEFAULT_ASPECT_RATIO: &str = "16:9";
