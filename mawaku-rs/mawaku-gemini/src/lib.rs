@@ -282,6 +282,7 @@ pub fn generate_text(api_key: &str, prompt: &str) -> Result<GenerateContentRespo
 
 pub fn generate_place_description(
     location: &str,
+    season: &str,
     api_key: &str,
 ) -> Result<PlaceDescription, GeminiError> {
     if api_key.trim().is_empty() {
@@ -289,7 +290,7 @@ pub fn generate_place_description(
     }
 
     let prompt = format!(
-        "Describe the place called {location}. Provide a general ambiance description, \
+        "Describe the place called {location} in the {season}. Provide a general ambiance description, \
          a list of potential items that might be found in a cozy interior view of this place, \
          and a list of keywords that capture the essence of this location."
     );

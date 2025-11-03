@@ -267,7 +267,8 @@ fn main() {
 
     if context.config_ready {
         if let Some(api_key) = context.gemini_api_key.as_deref() {
-            match generate_place_description(&context.location, api_key) {
+            let season = context.season.as_deref().unwrap_or("any season");
+            match generate_place_description(&context.location, season, api_key) {
                 Ok(description) => {
                     eprintln!("Gemini place description: {}", description);
                     prompt = build_structured_prompt(
