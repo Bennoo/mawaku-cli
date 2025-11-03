@@ -8,7 +8,19 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use toml::Value;
 
-pub const DEFAULT_PROMPT: &str = "A hyper photo-realistic unique background for a video call. Don't place any people in the frame; the goal is to use the scene as a virtual background in applications like Zoom. Highlight a cosy, lived-in and modern interior with realistic proportions and warm details. With a large window in the background. The camera height is around eye level when sitting.";
+pub const DEFAULT_PROMPT: &str = "\
+Photo, hyper-photorealistic, 4K, HDR, Studio Photo, indistinguishable from a real photo. \
+Strictly avoid synthetic, CGI, or video-game-style visuals. \
+Wide angle lens, and Respect accurate spatial scale to avoid oversized background elements. \
+The room should be quite spacious. \
+Don't place any people or body parts in the frame. Avoid any objects in the foreground like cameras, tables or hands. \
+Avoid smoke in the scene. \
+Highlight a cosy, lived-in and modern interior with realistic proportions and warm details. \
+The background includes a large window showing a beautiful outdoor scene. \
+Camera angle: webcam point of view from a desk setup, but don't show the desk itself. \
+Camera height: slightly above seated eye level, matching a real webcam’s perspective. \
+Camera location: Prefer a corner of the room.\
+The scene should simulate a believable space behind the camera.";
 pub const DEFAULT_GEMINI_API_KEY: &str = "";
 
 #[derive(Debug, Error)]
