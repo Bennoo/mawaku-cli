@@ -9,18 +9,17 @@ use thiserror::Error;
 use toml::Value;
 
 pub const DEFAULT_PROMPT: &str = "\
-Photo, hyper-photorealistic, 4K, HDR, Studio Photo, indistinguishable from a real photo. \
+Photo, hyper-photorealistic, 4K, HDR, studio lighting, indistinguishable from a real photo. \
 Strictly avoid synthetic, CGI, or video-game-style visuals. \
-Wide angle lens, and Respect accurate spatial scale to avoid oversized background elements. \
-The room should be quite spacious. \
-Don't place any people or body parts in the frame. Avoid any objects in the foreground like cameras, tables or hands. \
-Avoid smoke in the scene. \
-Highlight a cosy, lived-in and modern interior with realistic proportions and warm details. \
-The background includes a large window showing a beautiful outdoor scene. \
-Camera angle: webcam point of view from a desk setup, but don't show the desk itself. \
+Use a wide-angle lens with minimal distortion so proportions stay natural and avoid any fisheye warping. \
+Show a spacious room with generous depth behind the subject, cosy modern details, and believable scale. \
+Keep the immediate foreground empty—never include monitors, screens, desk edges, or camera equipment. \
+Don't place any people or body parts in the frame, and avoid smoke in the scene. \
+Present an unobstructed view of the room with a large window revealing a beautiful outdoor scene. \
+Camera angle: webcam-style vantage facing into the room while hovering just in front of the desk so no furniture crosses the frame edge. \
 Camera height: slightly above seated eye level, matching a real webcam’s perspective. \
-Camera location: Prefer a corner of the room.\
-The scene should simulate a believable space behind the camera.";
+Camera location: prefer a corner vantage that reveals depth. \
+The scene should feel like the believable background behind someone on a video call.";
 pub const DEFAULT_GEMINI_API_KEY: &str = "";
 
 #[derive(Debug, Error)]
