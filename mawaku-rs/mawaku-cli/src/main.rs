@@ -5,7 +5,10 @@ use mawaku_gemini::{
     generate_place_description,
 };
 use mawaku_image::{SaveImageOptions, save_base64_image};
-use rand::seq::SliceRandom;
+use mawaku_utils::{
+    DEFAULT_FILE_NAME_PREFIX, ImageNameBuilder, ImageNameContext, format_context_line,
+    list_or_unspecified, trimmed_or_none,
+};
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::thread;
@@ -39,93 +42,6 @@ struct Cli {
     /// Set the Gemini API key persisted in the Mawaku config file.
     #[arg(long, value_name = "KEY")]
     set_gemini_api_key: Option<String>,
-}
-
-const FILE_NAME_PREFIX: &str = "mawaku";
-const RANDOM_SUFFIX_LENGTH: usize = 5;
-const SUFFIX_ALPHABET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-const PARAM_COMPONENT_MAX_LEN: usize = 10;
-
-struct ImageNameContext {
-    base: String,
-}
-
-impl ImageNameContext {
-    fn new(cli: &Cli) -> Self {
-        let mut parts = Vec::new();
-        parts.push(FILE_NAME_PREFIX.to_string());
-
-        if let Some(location) = component_token(&cli.location) {
-            parts.push(location);
-        }
-
-        if let Some(season) = cli.season.as_deref().and_then(component_token) {
-            parts.push(season);
-        }
-
-        if let Some(time) = cli.time_of_day.as_deref().and_then(component_token) {
-            parts.push(time);
-        }
-
-        let base = parts.join("-");
-        Self { base }
-    }
-
-    fn file_stem(&self, index: usize) -> String {
-        let suffix = unique_suffix(RANDOM_SUFFIX_LENGTH);
-        format!("{}-p{}-{}", self.base, index, suffix)
-    }
-}
-
-fn component_token(input: &str) -> Option<String> {
-    slugify(input).map(|slug| truncate_component(&slug))
-}
-
-fn slugify(input: &str) -> Option<String> {
-    let mut slug = String::new();
-    let mut last_was_separator = false;
-
-    for ch in input.chars() {
-        if ch.is_ascii_alphanumeric() {
-            slug.push(ch.to_ascii_lowercase());
-            last_was_separator = false;
-        } else if matches!(ch, ' ' | '-' | '_' | '.' | '/' | '\\') {
-            if !last_was_separator && !slug.is_empty() {
-                slug.push('-');
-                last_was_separator = true;
-            }
-        } else if !last_was_separator && !slug.is_empty() {
-            slug.push('-');
-            last_was_separator = true;
-        }
-    }
-
-    let slug = slug.trim_matches('-').to_string();
-    if slug.is_empty() { None } else { Some(slug) }
-}
-
-fn truncate_component(slug: &str) -> String {
-    if slug.len() <= PARAM_COMPONENT_MAX_LEN {
-        return slug.to_string();
-    }
-
-    let truncated: String = slug.chars().take(PARAM_COMPONENT_MAX_LEN).collect();
-    let trimmed = truncated.trim_end_matches('-').to_string();
-    if trimmed.is_empty() {
-        truncated
-    } else {
-        trimmed
-    }
-}
-
-fn unique_suffix(length: usize) -> String {
-    debug_assert!(length <= SUFFIX_ALPHABET.len());
-    let mut rng = rand::thread_rng();
-    SUFFIX_ALPHABET
-        .choose_multiple(&mut rng, length)
-        .copied()
-        .map(char::from)
-        .collect()
 }
 
 fn generate_image_with_progress(
@@ -170,38 +86,6 @@ fn generate_image_with_progress(
     }
 }
 
-fn trimmed_or_none<'a>(input: Option<&'a str>) -> Option<&'a str> {
-    input.and_then(|value| {
-        let trimmed = value.trim();
-        if trimmed.is_empty() {
-            None
-        } else {
-            Some(trimmed)
-        }
-    })
-}
-
-fn list_or_unspecified(items: &[String]) -> String {
-    let filtered: Vec<&str> = items
-        .iter()
-        .map(|value| value.trim())
-        .filter(|value| !value.is_empty())
-        .collect();
-
-    if filtered.is_empty() {
-        "Unspecified".to_string()
-    } else {
-        filtered.join(", ")
-    }
-}
-
-fn format_context_line(label: &str, value: Option<&str>) -> String {
-    match trimmed_or_none(value) {
-        Some(text) => format!("{label}: {text}"),
-        None => format!("{label}: Unspecified"),
-    }
-}
-
 fn build_structured_prompt(
     general_instructions: &str,
     description: Option<&PlaceDescription>,
@@ -243,9 +127,17 @@ fn build_structured_prompt(
     sections.join("\n\n")
 }
 
+fn build_image_name_context(cli: &Cli) -> ImageNameContext {
+    let mut builder = ImageNameBuilder::new(DEFAULT_FILE_NAME_PREFIX);
+    builder.push_component(Some(cli.location.as_str()));
+    builder.push_component(cli.season.as_deref());
+    builder.push_component(cli.time_of_day.as_deref());
+    builder.build()
+}
+
 fn main() {
     let cli = Cli::parse();
-    let image_name_context = ImageNameContext::new(&cli);
+    let image_name_context = build_image_name_context(&cli);
 
     let context = run(cli);
 

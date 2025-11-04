@@ -3,6 +3,8 @@
 ## Project Structure & Module Organization
 - Repository root hosts contributor docs, devcontainer assets, and the Rust workspace under `mawaku-rs/`.
 - The CLI crate lives in `mawaku-rs/mawaku-cli`; `src/main.rs` exposes the Clap-based entrypoint and handles prompt selection.
+- Shared CLI tooling (image naming helpers, formatting utilities, etc.) belongs in `mawaku-rs/mawaku-utils` and should be
+  imported from there rather than re-implementing helpers inside the CLI crate.
 - Shared configuration code (including config file discovery and defaults) is in `mawaku-rs/mawaku-config/src/lib.rs`.
 - Create integration tests under `mawaku-rs/tests/` (auto-discovered by Cargo) and sample prompts or fixtures inside `mawaku-rs/fixtures/` if needed.
 - Keep crate source files focused on production code. Place unit test modules in dedicated sibling files (e.g., `src/tests.rs`) and reference them from the main module with `#[cfg(test)] mod tests;` to avoid bloating primary source files.

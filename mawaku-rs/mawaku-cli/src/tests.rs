@@ -1,6 +1,7 @@
 use super::*;
 use mawaku_config::{DEFAULT_GEMINI_API_KEY, DEFAULT_PROMPT};
 use mawaku_gemini::craft_prompt;
+use mawaku_utils::{COMPONENT_MAX_LEN, DEFAULT_RANDOM_SUFFIX_LENGTH, component_token};
 use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -195,7 +196,7 @@ fn image_name_context_builds_unique_file_stem() {
         set_gemini_api_key: None,
     };
 
-    let context = ImageNameContext::new(&cli);
+    let context = build_image_name_context(&cli);
     let stem = context.file_stem(1);
 
     assert!(stem.starts_with("mawaku-hakone-jap-spring-dusk-p1-"));
@@ -203,12 +204,12 @@ fn image_name_context_builds_unique_file_stem() {
     let (_, suffix) = stem
         .rsplit_once('-')
         .expect("file stem includes random suffix separator");
-    assert_eq!(suffix.len(), RANDOM_SUFFIX_LENGTH);
+    assert_eq!(suffix.len(), DEFAULT_RANDOM_SUFFIX_LENGTH);
 
     let mut chars: Vec<char> = suffix.chars().collect();
     chars.sort_unstable();
     chars.dedup();
-    assert_eq!(chars.len(), RANDOM_SUFFIX_LENGTH);
+    assert_eq!(chars.len(), DEFAULT_RANDOM_SUFFIX_LENGTH);
 }
 
 #[test]
@@ -220,7 +221,7 @@ fn image_name_context_truncates_long_components() {
         set_gemini_api_key: None,
     };
 
-    let context = ImageNameContext::new(&cli);
+    let context = build_image_name_context(&cli);
     let stem = context.file_stem(2);
     let pattern = format!("-p{}-", 2);
     let (base, _) = stem
@@ -236,12 +237,12 @@ fn image_name_context_truncates_long_components() {
 
     let season_component =
         component_token(cli.season.as_deref().unwrap()).expect("season component slug exists");
-    assert_eq!(season_component.len(), PARAM_COMPONENT_MAX_LEN);
+    assert_eq!(season_component.len(), COMPONENT_MAX_LEN);
     assert_eq!(season_component, "supercalif");
 
     let time_component =
         component_token(cli.time_of_day.as_deref().unwrap()).expect("time component slug exists");
-    assert_eq!(time_component.len(), PARAM_COMPONENT_MAX_LEN);
+    assert_eq!(time_component.len(), COMPONENT_MAX_LEN);
     assert_eq!(time_component, "midnight-s");
 }
 
