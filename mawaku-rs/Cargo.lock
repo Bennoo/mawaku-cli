@@ -680,7 +680,7 @@ dependencies = [
  "mawaku-config",
  "mawaku-gemini",
  "mawaku-image",
- "rand",
+ "mawaku-utils",
 ]
 
 [[package]]
@@ -709,6 +709,13 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "thiserror",
+]
+
+[[package]]
+name = "mawaku-utils"
+version = "0.1.0"
+dependencies = [
+ "rand",
 ]
 
 [[package]]

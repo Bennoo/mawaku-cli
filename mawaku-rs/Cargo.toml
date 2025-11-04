@@ -1,5 +1,5 @@
 [workspace]
-members = ["mawaku-cli", "mawaku-config", "mawaku-gemini", "mawaku-image"]
+members = ["mawaku-cli", "mawaku-config", "mawaku-gemini", "mawaku-image", "mawaku-utils"]
 resolver = "3"
 
 [workspace.package]

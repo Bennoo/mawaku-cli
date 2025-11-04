@@ -42,8 +42,10 @@ fn empty_api_key_is_rejected() {
 
 #[test]
 fn endpoint_uses_defaults() {
-    let expected =
-        "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict";
+    let expected = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/{model}:predict",
+        model = DEFAULT_IMG_MODEL_VERSION
+    );
     assert_eq!(image_endpoint_url(), expected);
 }
 
