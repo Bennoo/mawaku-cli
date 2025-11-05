@@ -91,24 +91,59 @@ The CLI will warn on startup if the `GEMINI_API_KEY` remains empty.
 
 ## Docker Usage
 
-Build and run the CLI without installing Rust locally:
+Follow these steps to run Mawaku inside Docker with Gemini image generation enabled and images saved to a host directory.
 
-```bash
-# From the repository root
-docker build -f mawaku-rs/Dockerfile -t mawaku-cli mawaku-rs
-docker run --rm mawaku-cli --help
-```
+1. **Build the image**
 
-The Docker image uses Rust nightly to support the workspace’s 2024 edition and resolver v3.
+   ```bash
+   docker build -f mawaku-rs/Dockerfile -t mawaku-cli mawaku-rs
+   ```
 
-Mount a local config directory so the container can reuse your prompts and credentials across runs:
+2. **Inspect the CLI flags**
 
-```bash
-mkdir -p .mawaku-config
-docker run --rm \
-  -v "$(pwd)/.mawaku-config:/root/.config/mawaku" \
-  mawaku-cli --location "Lisbon, Portugal" --season spring --time-of-day dusk
-```
+   ```bash
+   docker run --rm mawaku-cli --help
+   ```
+
+3. **Persist your Gemini API key**
+
+   Mount the config directory so the container can store credentials once. Replace `YOUR_GEMINI_KEY` with the key issued by Google.
+
+   ```bash
+   mkdir -p .mawaku-config
+   docker run --rm \
+     -v "$(pwd)/.mawaku-config:/root/.mawaku" \
+     mawaku-cli \
+     --location "Lisbon, Portugal" \
+     --set-gemini-api-key "YOUR_GEMINI_KEY"
+   ```
+
+   The command runs a sample prompt and updates `.mawaku-config/config.toml` with your key so later invocations can reuse it.
+
+4. **Choose an output directory for generated images**
+
+   Create a host folder and mount it where the container should write images. Update `image_output_dir` inside `.mawaku-config/config.toml` to match the in-container mount point.
+
+   ```bash
+   mkdir -p outputs
+   # Open .mawaku-config/config.toml and ensure it contains:
+   # gemini_api_key = "YOUR_GEMINI_KEY"
+   # image_output_dir = "/workspace/outputs"
+   ```
+
+5. **Run a generation**
+
+   ```bash
+   docker run --rm \
+     -v "$(pwd)/.mawaku-config:/root/.mawaku" \
+     -v "$(pwd)/outputs:/workspace/outputs" \
+     mawaku-cli \
+     --location "Hakone, Japan" \
+     --season spring \
+     --time-of-day dusk
+   ```
+
+   The resulting PNG files land in `./outputs` on the host machine, while prompts and credentials remain under `./.mawaku-config`.
 
 ## Configuration
 

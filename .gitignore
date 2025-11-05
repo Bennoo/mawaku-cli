@@ -12,3 +12,4 @@
 # Allow example documentation images
 !docs/examples/*.png
 
+.mawaku-config/config.toml
