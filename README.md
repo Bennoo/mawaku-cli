@@ -89,6 +89,27 @@ cargo run -p mawaku -- --set-gemini-api-key "your-secret"
 
 The CLI will warn on startup if the `GEMINI_API_KEY` remains empty.
 
+## Docker Usage
+
+Build and run the CLI without installing Rust locally:
+
+```bash
+# From the repository root
+docker build -f mawaku-rs/Dockerfile -t mawaku-cli mawaku-rs
+docker run --rm mawaku-cli --help
+```
+
+The Docker image uses Rust nightly to support the workspace’s 2024 edition and resolver v3.
+
+Mount a local config directory so the container can reuse your prompts and credentials across runs:
+
+```bash
+mkdir -p .mawaku-config
+docker run --rm \
+  -v "$(pwd)/.mawaku-config:/root/.config/mawaku" \
+  mawaku-cli --location "Lisbon, Portugal" --season spring --time-of-day dusk
+```
+
 ## Configuration
 
 Mawaku persists its defaults in a user-level config file (created on first run) via the `mawaku-config` crate. The file lives at `~/.mawaku/config.toml`, ensuring the CLI keeps its settings directly under your home directory across operating systems. The same file now stores an optional `gemini_api_key` entry so that the CLI can connect to Gemini without prompting for the credential every run.
