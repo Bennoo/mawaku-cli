@@ -14,3 +14,6 @@ mawaku-config = { path = "../mawaku-config" }
 mawaku-gemini = { path = "../mawaku-gemini" }
 mawaku-image = { path = "../mawaku-image" }
 mawaku-utils = { path = "../mawaku-utils" }
+
+[dev-dependencies]
+toml = { workspace = true }

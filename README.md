@@ -33,13 +33,13 @@ Craft richly lit video-call backdrops from a single prompt. **Mawaku** (間 *ma*
      --time-of-day dusk
    ```
 
-3. **Store your Gemini API key once**
+3. **Export your Gemini API key once**
 
    ```bash
-   cargo run -p mawaku -- --set-gemini-api-key "your-secret"
+   export GEMINI_API_KEY="your-secret"
    ```
 
-   The CLI highlights missing credentials at launch, so you always know when Gemini access is inactive.
+   Mawaku reads this variable each time it runs (and warns loudly if it is absent), so you never have to edit the config with raw secrets.
 
 ---
 
@@ -105,11 +105,19 @@ Get inspired by a few curated scenes. Each command runs from the `mawaku-rs/` wo
 
 Mawaku writes persistent settings to `~/.mawaku/config.toml` the first time you run the CLI. Key entries include:
 
-| Key              | Purpose                                                      |
-| ---------------- | ------------------------------------------------------------ |
-| `prompt`         | Baseline template the CLI enriches with your inputs.         |
-| `gemini_api_key` | Optional credential for Gemini image generation.            |
-| `image_output_dir` | Directory (inside or outside Docker) for rendered assets. |
+| Key / Section       | Purpose                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `prompt`            | Baseline template the CLI enriches with your inputs.                                         |
+| `[gemini_api]`      | Tracks the environment variable that stores the Gemini API key.                               |
+| `image_output_dir`  | Directory (inside or outside Docker) for rendered assets.                                    |
+
+> **Gemini credentials**
+>
+> Mawaku never writes the Gemini API key to disk. Instead, `[gemini_api]` keeps a single entry: `api_key_env_var`. It defaults to `GEMINI_API_KEY`, but you can edit the config file to point to any environment variable name you prefer (for example, `GEMINI_KEY`). Make sure that variable is exported before invoking the CLI.
+
+> **Image output directory**
+>
+> `image_output_dir` remains at the root of the file for backward compatibility: older Mawaku releases only understood this top-level key, so keeping it there avoids breaking existing configs while still letting you edit the path manually.
 
 To revert to defaults, delete the file and re-run any Mawaku command; a fresh template is generated automatically.
 
@@ -130,10 +138,10 @@ Run Mawaku inside an isolated container while keeping prompts, credentials, and 
    ```bash
    mkdir -p .mawaku-config
    docker run --rm \
+     -e GEMINI_API_KEY="YOUR_GEMINI_KEY" \
      -v "$(pwd)/.mawaku-config:/root/.mawaku" \
      mawaku-cli \
-     --location "Lisbon, Portugal" \
-     --set-gemini-api-key "YOUR_GEMINI_KEY"
+     --location "Lisbon, Portugal"
    ```
 
 3. **Choose an output directory**
@@ -141,7 +149,8 @@ Run Mawaku inside an isolated container while keeping prompts, credentials, and 
    ```bash
    mkdir -p outputs
    # Ensure .mawaku-config/config.toml contains:
-   # gemini_api_key = "YOUR_GEMINI_KEY"
+   # [gemini_api]
+   # api_key_env_var = "GEMINI_API_KEY"
    # image_output_dir = "/workspace/outputs"
    ```
 

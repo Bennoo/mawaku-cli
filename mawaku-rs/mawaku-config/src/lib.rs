@@ -20,7 +20,7 @@ Camera angle: webcam-style vantage facing into the room while hovering just in f
 Camera height: slightly above seated eye level, matching a real webcam’s perspective. \
 Camera location: prefer a corner vantage that reveals depth. \
 The scene should feel like the believable background behind someone on a video call.";
-pub const DEFAULT_GEMINI_API_KEY: &str = "";
+pub const DEFAULT_GEMINI_API_KEY_ENV_VAR: &str = "GEMINI_API_KEY";
 
 #[derive(Debug, Error)]
 pub enum ConfigError {
@@ -37,15 +37,41 @@ pub enum ConfigError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
-    pub gemini_api_key: String,
+    pub gemini_api: GeminiApiConfig,
+    /// Stored at the root of `config.toml` for backward compatibility with
+    /// earlier Mawaku versions that only understood this top-level key.
     pub image_output_dir: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct GeminiApiConfig {
+    pub api_key_env_var: String,
+}
+
+impl GeminiApiConfig {
+    pub fn api_key_env_var(&self) -> &str {
+        if self.api_key_env_var.trim().is_empty() {
+            DEFAULT_GEMINI_API_KEY_ENV_VAR
+        } else {
+            self.api_key_env_var.as_str()
+        }
+    }
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            gemini_api_key: DEFAULT_GEMINI_API_KEY.to_string(),
+            gemini_api: GeminiApiConfig::default(),
             image_output_dir: default_image_output_dir().unwrap_or_else(|_| ".".to_string()),
+        }
+    }
+}
+
+impl Default for GeminiApiConfig {
+    fn default() -> Self {
+        Self {
+            api_key_env_var: DEFAULT_GEMINI_API_KEY_ENV_VAR.to_string(),
         }
     }
 }
@@ -62,6 +88,45 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
         if let Value::Table(ref mut table) = value {
             if table.remove("default_prompt").is_some() {
                 should_rewrite = true;
+            }
+
+            if table.remove("gemini_api_key").is_some() {
+                should_rewrite = true;
+            }
+
+            if let Some(Value::Table(gemini_api)) = table.get_mut("gemini_api") {
+                let mut updated_env_var = None;
+                if !gemini_api.contains_key("api_key_env_var") {
+                    if let Some(env_var) = gemini_api
+                        .get("environment")
+                        .and_then(Value::as_str)
+                        .and_then(|environment| {
+                            gemini_api
+                                .get("environments")
+                                .and_then(Value::as_table)
+                                .and_then(|environments| {
+                                    environments.get(environment).and_then(Value::as_str)
+                                })
+                        })
+                    {
+                        updated_env_var = Some(env_var.to_string());
+                    }
+                }
+
+                if gemini_api.remove("environment").is_some() {
+                    should_rewrite = true;
+                }
+
+                if gemini_api.remove("environments").is_some() {
+                    should_rewrite = true;
+                }
+
+                if !gemini_api.contains_key("api_key_env_var") {
+                    let value = updated_env_var
+                        .unwrap_or_else(|| DEFAULT_GEMINI_API_KEY_ENV_VAR.to_string());
+                    gemini_api.insert("api_key_env_var".to_string(), Value::String(value));
+                    should_rewrite = true;
+                }
             }
         }
 
