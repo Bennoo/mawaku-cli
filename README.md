@@ -43,6 +43,23 @@ Craft richly lit video-call backdrops from a single prompt. **Mawaku** (間 *ma*
 
 ---
 
+## Precompiled Linux binary
+
+Prefer not to install Rust? Every GitHub Release now includes a `mawaku-linux-x86_64.tar.gz` archive built by CI. Download the asset from the project’s **Releases** page, extract it, and run the binary directly:
+
+```bash
+# Replace <TAG> with the published release tag and OWNER/REPO with this project path.
+curl -L -o mawaku-linux-x86_64.tar.gz \
+  https://github.com/OWNER/REPO/releases/download/<TAG>/mawaku-linux-x86_64.tar.gz
+tar -xzf mawaku-linux-x86_64.tar.gz
+chmod +x mawaku
+./mawaku --help
+```
+
+Move the extracted `mawaku` binary anywhere on your `PATH` (e.g., `/usr/local/bin`) to call it from any directory.
+
+---
+
 ## Spotlight Prompts
 
 Get inspired by a few curated scenes. Each command runs from the `mawaku-rs/` workspace root.

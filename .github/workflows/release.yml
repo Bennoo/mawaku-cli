@@ -1,0 +1,36 @@
+name: Release (Linux)
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  linux-binary:
+    name: Build Linux binary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+        working-directory: mawaku-rs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build release binary
+        run: cargo build --release -p mawaku
+
+      - name: Package binary
+        run: |
+          mkdir -p dist
+          tar -czf dist/mawaku-linux-x86_64.tar.gz -C target/release mawaku
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mawaku-rs/dist/mawaku-linux-x86_64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
