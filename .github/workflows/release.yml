@@ -6,10 +6,20 @@ on:
 
 jobs:
   linux-binary:
-    name: Build Linux binary
+    name: Build Linux binary (${{ matrix.arch }})
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            target: x86_64-unknown-linux-gnu
+            asset: mawaku-linux-x86_64.tar.gz
+          - arch: aarch64
+            target: aarch64-unknown-linux-gnu
+            asset: mawaku-linux-aarch64.tar.gz
     defaults:
       run:
         shell: bash
@@ -20,17 +30,26 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install cross-compilation toolchain
+        if: matrix.arch == 'aarch64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Add compilation target
+        run: rustup target add ${{ matrix.target }}
+
       - name: Build release binary
-        run: cargo build --release -p mawaku
+        run: cargo build --release -p mawaku --target ${{ matrix.target }}
 
       - name: Package binary
         run: |
           mkdir -p dist
-          tar -czf dist/mawaku-linux-x86_64.tar.gz -C target/release mawaku
+          tar -czf dist/${{ matrix.asset }} -C target/${{ matrix.target }}/release mawaku
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: mawaku-rs/dist/mawaku-linux-x86_64.tar.gz
+          files: mawaku-rs/dist/${{ matrix.asset }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

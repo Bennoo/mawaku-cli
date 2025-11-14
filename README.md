@@ -49,8 +49,7 @@ Prefer not to install Rust? Every GitHub Release now includes a `mawaku-linux-x8
 
 ```bash
 # Replace <TAG> with the published release tag and OWNER/REPO with this project path.
-curl -L -o mawaku-linux-x86_64.tar.gz \
-  https://github.com/OWNER/REPO/releases/download/<TAG>/mawaku-linux-x86_64.tar.gz
+curl -L -o mawaku-linux-x86_64.tar.gz https://github.com/Bennoo/mawaku-cli/releases/download/v0.0.1/mawaku-linux-x86_64.tar.gz
 tar -xzf mawaku-linux-x86_64.tar.gz
 chmod +x mawaku
 ./mawaku --help
