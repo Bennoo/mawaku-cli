@@ -681,6 +681,7 @@ dependencies = [
  "mawaku-gemini",
  "mawaku-image",
  "mawaku-utils",
+ "toml",
 ]
 
 [[package]]

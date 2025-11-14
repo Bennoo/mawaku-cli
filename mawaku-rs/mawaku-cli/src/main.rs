@@ -1,5 +1,5 @@
 use clap::Parser;
-use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init, save};
+use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init};
 use mawaku_gemini::{
     GeminiError, PlaceDescription, PredictResponse, craft_prompt, generate_image,
     generate_place_description,
@@ -9,13 +9,14 @@ use mawaku_utils::{
     DEFAULT_FILE_NAME_PREFIX, ImageNameBuilder, ImageNameContext, format_context_line,
     list_or_unspecified, trimmed_or_none,
 };
+use std::env;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::thread;
 use std::time::{Duration, Instant};
 
-const GEMINI_KEY_WARNING: &str =
-    "Warning: GEMINI_API_KEY is not set. Use `mawaku --set-gemini-api-key <KEY>` to configure it.";
+const GEMINI_KEY_WARNING_PREFIX: &str =
+    "Warning: Gemini API key environment variable is missing. Export it before running Mawaku: ";
 
 /// Mawaku CLI entry point.
 ///
@@ -39,9 +40,6 @@ struct Cli {
     /// Optional time of day to tailor the lighting of the scene.
     #[arg(long = "time-of-day", value_name = "TIME")]
     time_of_day: Option<String>,
-    /// Set the Gemini API key persisted in the Mawaku config file.
-    #[arg(long, value_name = "KEY")]
-    set_gemini_api_key: Option<String>,
 }
 
 fn generate_image_with_progress(
@@ -249,7 +247,6 @@ fn run(cli: Cli) -> RunContext {
         location,
         season,
         time_of_day,
-        set_gemini_api_key,
     } = cli;
 
     let mut infos = Vec::new();
@@ -264,24 +261,11 @@ fn run(cli: Cli) -> RunContext {
                 ));
             }
 
-            let mut config = outcome.config;
+            let config = outcome.config;
 
-            if let Some(key) = set_gemini_api_key.clone() {
-                config.gemini_api_key = key;
-                match save(&config, &outcome.path) {
-                    Ok(()) => infos.push(format!(
-                        "Updated GEMINI_API_KEY in {}",
-                        outcome.path.display()
-                    )),
-                    Err(error) => warnings.push(format!(
-                        "Warning: failed to update GEMINI_API_KEY ({error})."
-                    )),
-                }
-            }
-
-            let has_api_key = !config.gemini_api_key.trim().is_empty();
-            if !has_api_key {
-                warnings.push(GEMINI_KEY_WARNING.to_string());
+            let (gemini_api_key, warning) = resolve_gemini_api_key(&config);
+            if let Some(message) = warning {
+                warnings.push(message);
             }
 
             let prompt_value = craft_prompt(
@@ -290,7 +274,7 @@ fn run(cli: Cli) -> RunContext {
                 season.as_deref(),
                 time_of_day.as_deref(),
             );
-            let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
+            let gemini_api_key = gemini_api_key.clone();
             let image_output_dir = Some(PathBuf::from(&config.image_output_dir));
 
             RunContext {
@@ -310,18 +294,11 @@ fn run(cli: Cli) -> RunContext {
                 "Warning: failed to load Mawaku configuration ({error}). Falling back to defaults."
             ));
 
-            if set_gemini_api_key.is_some() {
-                warnings.push(
-                    "Warning: cannot update GEMINI_API_KEY because the configuration could not be loaded."
-                        .to_string(),
-                );
-            }
-
             let config = Config::default();
 
-            let has_api_key = !config.gemini_api_key.trim().is_empty();
-            if !has_api_key {
-                warnings.push(GEMINI_KEY_WARNING.to_string());
+            let (gemini_api_key, warning) = resolve_gemini_api_key(&config);
+            if let Some(message) = warning {
+                warnings.push(message);
             }
 
             let prompt_value = craft_prompt(
@@ -330,7 +307,7 @@ fn run(cli: Cli) -> RunContext {
                 season.as_deref(),
                 time_of_day.as_deref(),
             );
-            let gemini_api_key = has_api_key.then(|| config.gemini_api_key.clone());
+            let gemini_api_key = gemini_api_key.clone();
             let image_output_dir = Some(PathBuf::from(&config.image_output_dir));
 
             RunContext {
@@ -345,6 +322,14 @@ fn run(cli: Cli) -> RunContext {
                 time_of_day: time_of_day.clone(),
             }
         }
+    }
+}
+
+fn resolve_gemini_api_key(config: &Config) -> (Option<String>, Option<String>) {
+    let env_var = config.gemini_api.api_key_env_var();
+    match env::var(env_var) {
+        Ok(value) if !value.trim().is_empty() => (Some(value), None),
+        _ => (None, Some(format!("{GEMINI_KEY_WARNING_PREFIX}{env_var}."))),
     }
 }
 
