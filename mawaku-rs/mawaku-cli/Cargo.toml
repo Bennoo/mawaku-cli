@@ -1,9 +1,9 @@
 [package]
 name = "mawaku"
-version = "0.0.0"
-edition = "2024"
+version = "0.1.0"
+edition.workspace = true
 description = "Command-line tool scaffold for generating video call backgrounds"
-license = "MIT OR Apache-2.0"
+license.workspace = true
 readme = "../../README.md"
 keywords = ["cli", "backgrounds", "video"]
 categories = ["command-line-utilities"]
