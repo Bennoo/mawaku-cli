@@ -10,10 +10,10 @@ categories = ["command-line-utilities"]
 
 [dependencies]
 clap = { workspace = true }
-mawaku-config = { path = "../mawaku-config" }
-mawaku-gemini = { path = "../mawaku-gemini" }
-mawaku-image = { path = "../mawaku-image" }
-mawaku-utils = { path = "../mawaku-utils" }
+mawaku-config = { path = "../mawaku-config", version = "0.1.0" }
+mawaku-gemini = { path = "../mawaku-gemini", version = "0.1.0" }
+mawaku-image = { path = "../mawaku-image", version = "0.1.0" }
+mawaku-utils = { path = "../mawaku-utils", version = "0.1.0" }
 
 [dev-dependencies]
 toml = { workspace = true }
