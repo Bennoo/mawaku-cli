@@ -155,72 +155,65 @@ fn main() {
         context.time_of_day.as_deref(),
     );
 
-    if context.config_ready {
-        if let Some(api_key) = context.gemini_api_key.as_deref() {
-            let season = context.season.as_deref().unwrap_or("any season");
-            match generate_place_description(&context.location, season, api_key) {
-                Ok(description) => {
-                    eprintln!("Gemini place description: {}", description);
-                    prompt = build_structured_prompt(
-                        general_instructions.as_str(),
-                        Some(&description),
-                        context.season.as_deref(),
-                        context.time_of_day.as_deref(),
-                    );
-                }
-                Err(error) => {
-                    eprintln!(
-                        "Warning: failed to generate place description via Gemini ({error})."
-                    );
-                }
+    if context.config_ready && let Some(api_key) = context.gemini_api_key.as_deref() {
+        let season = context.season.as_deref().unwrap_or("any season");
+        match generate_place_description(&context.location, season, api_key) {
+            Ok(description) => {
+                eprintln!("Gemini place description: {}", description);
+                prompt = build_structured_prompt(
+                    general_instructions.as_str(),
+                    Some(&description),
+                    context.season.as_deref(),
+                    context.time_of_day.as_deref(),
+                );
             }
-            match generate_image_with_progress(api_key, &prompt) {
-                Some(Ok(response)) => {
-                    eprintln!(
-                        "Gemini generated {} prediction(s).",
-                        response.predictions.len()
-                    );
+            Err(error) => {
+                eprintln!("Warning: failed to generate place description via Gemini ({error}).");
+            }
+        }
+        match generate_image_with_progress(api_key, &prompt) {
+            Some(Ok(response)) => {
+                eprintln!(
+                    "Gemini generated {} prediction(s).",
+                    response.predictions.len()
+                );
 
-                    for (index, prediction) in response.predictions.iter().enumerate() {
-                        let display_index = index + 1;
-                        match prediction.bytes_base64_encoded.as_deref() {
-                            Some(encoded) => {
-                                let file_stem = image_name_context.file_stem(display_index);
-                                let output_dir = context.image_output_dir.as_deref();
-                                let options = SaveImageOptions {
-                                    file_stem: Some(file_stem.as_str()),
-                                    mime_type: prediction.mime_type.as_deref(),
-                                    output_dir,
-                                };
+                for (index, prediction) in response.predictions.iter().enumerate() {
+                    let display_index = index + 1;
+                    match prediction.bytes_base64_encoded.as_deref() {
+                        Some(encoded) => {
+                            let file_stem = image_name_context.file_stem(display_index);
+                            let output_dir = context.image_output_dir.as_deref();
+                            let options = SaveImageOptions {
+                                file_stem: Some(file_stem.as_str()),
+                                mime_type: prediction.mime_type.as_deref(),
+                                output_dir,
+                            };
 
-                                match save_base64_image(encoded, options) {
-                                    Ok(path) => {
-                                        eprintln!(
-                                            "Saved prediction #{display_index} to {}",
-                                            path.display()
-                                        );
-                                    }
-                                    Err(error) => {
-                                        eprintln!(
-                                            "Warning: failed to save prediction #{display_index} ({error})."
-                                        );
-                                    }
+                            match save_base64_image(encoded, options) {
+                                Ok(path) => {
+                                    eprintln!("Saved prediction #{display_index} to {}", path.display());
+                                }
+                                Err(error) => {
+                                    eprintln!(
+                                        "Warning: failed to save prediction #{display_index} ({error})."
+                                    );
                                 }
                             }
-                            None => {
-                                eprintln!(
-                                    "Warning: prediction #{display_index} did not include encoded image bytes."
-                                );
-                            }
+                        }
+                        None => {
+                            eprintln!(
+                                "Warning: prediction #{display_index} did not include encoded image bytes."
+                            );
                         }
                     }
                 }
-                Some(Err(error)) => {
-                    eprintln!("Warning: failed to generate image via Gemini ({error}).");
-                }
-                None => {
-                    eprintln!("Warning: image generation request ended unexpectedly.");
-                }
+            }
+            Some(Err(error)) => {
+                eprintln!("Warning: failed to generate image via Gemini ({error}).");
+            }
+            None => {
+                eprintln!("Warning: image generation request ended unexpectedly.");
             }
         }
     }

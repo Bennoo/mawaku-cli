@@ -26,10 +26,8 @@ impl ImageNameBuilder {
     }
 
     pub fn push_component(&mut self, value: Option<&str>) {
-        if let Some(value) = value {
-            if let Some(token) = component_token(value) {
-                self.parts.push(token);
-            }
+        if let Some(value) = value && let Some(token) = component_token(value) {
+            self.parts.push(token);
         }
     }
 
@@ -117,7 +115,7 @@ fn unique_suffix(length: usize) -> String {
         .collect()
 }
 
-pub fn trimmed_or_none<'a>(input: Option<&'a str>) -> Option<&'a str> {
+pub fn trimmed_or_none(input: Option<&str>) -> Option<&str> {
     input.and_then(|value| {
         let trimmed = value.trim();
         if trimmed.is_empty() {

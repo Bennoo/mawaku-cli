@@ -96,8 +96,8 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
 
             if let Some(Value::Table(gemini_api)) = table.get_mut("gemini_api") {
                 let mut updated_env_var = None;
-                if !gemini_api.contains_key("api_key_env_var") {
-                    if let Some(env_var) = gemini_api
+                if !gemini_api.contains_key("api_key_env_var")
+                    && let Some(env_var) = gemini_api
                         .get("environment")
                         .and_then(Value::as_str)
                         .and_then(|environment| {
@@ -108,9 +108,8 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
                                     environments.get(environment).and_then(Value::as_str)
                                 })
                         })
-                    {
-                        updated_env_var = Some(env_var.to_string());
-                    }
+                {
+                    updated_env_var = Some(env_var.to_string());
                 }
 
                 if gemini_api.remove("environment").is_some() {
@@ -157,8 +156,10 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
         })
     } else {
         ensure_parent_exists(&path)?;
-        let mut config = Config::default();
-        config.image_output_dir = default_image_output_dir_for(&path);
+        let config = Config {
+            image_output_dir: default_image_output_dir_for(&path),
+            ..Config::default()
+        };
         save(&config, &path)?;
         Ok(LoadOutcome {
             config,
