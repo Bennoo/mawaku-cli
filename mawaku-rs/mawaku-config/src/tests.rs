@@ -114,6 +114,7 @@ where
     let temp_home = create_unique_home();
     let snapshot = EnvSnapshot::capture();
     set_home_env(&temp_home);
+    remove_env(DEFAULT_GEMINI_API_KEY_ENV_VAR);
 
     func(&temp_home);
 
@@ -140,6 +141,7 @@ fn set_home_env(path: &Path) {
 struct EnvSnapshot {
     home: Option<OsString>,
     userprofile: Option<OsString>,
+    gemini_api_key: Option<OsString>,
 }
 
 impl EnvSnapshot {
@@ -147,6 +149,7 @@ impl EnvSnapshot {
         Self {
             home: std::env::var_os("HOME"),
             userprofile: std::env::var_os("USERPROFILE"),
+            gemini_api_key: std::env::var_os(DEFAULT_GEMINI_API_KEY_ENV_VAR),
         }
     }
 
@@ -161,6 +164,12 @@ impl EnvSnapshot {
             set_env("USERPROFILE", &value);
         } else {
             remove_env("USERPROFILE");
+        }
+
+        if let Some(value) = self.gemini_api_key {
+            set_env(DEFAULT_GEMINI_API_KEY_ENV_VAR, &value);
+        } else {
+            remove_env(DEFAULT_GEMINI_API_KEY_ENV_VAR);
         }
     }
 }
