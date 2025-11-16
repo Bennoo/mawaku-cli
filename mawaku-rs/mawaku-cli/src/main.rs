@@ -155,7 +155,9 @@ fn main() {
         context.time_of_day.as_deref(),
     );
 
-    if context.config_ready && let Some(api_key) = context.gemini_api_key.as_deref() {
+    if context.config_ready
+        && let Some(api_key) = context.gemini_api_key.as_deref()
+    {
         let season = context.season.as_deref().unwrap_or("any season");
         match generate_place_description(&context.location, season, api_key) {
             Ok(description) => {
@@ -192,7 +194,10 @@ fn main() {
 
                             match save_base64_image(encoded, options) {
                                 Ok(path) => {
-                                    eprintln!("Saved prediction #{display_index} to {}", path.display());
+                                    eprintln!(
+                                        "Saved prediction #{display_index} to {}",
+                                        path.display()
+                                    );
                                 }
                                 Err(error) => {
                                     eprintln!(

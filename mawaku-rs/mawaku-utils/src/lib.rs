@@ -26,7 +26,9 @@ impl ImageNameBuilder {
     }
 
     pub fn push_component(&mut self, value: Option<&str>) {
-        if let Some(value) = value && let Some(token) = component_token(value) {
+        if let Some(value) = value
+            && let Some(token) = component_token(value)
+        {
             self.parts.push(token);
         }
     }
