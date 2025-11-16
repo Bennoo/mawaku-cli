@@ -1,5 +1,5 @@
 use super::*;
-use mawaku_config::{DEFAULT_GEMINI_API_KEY, DEFAULT_PROMPT};
+use mawaku_config::{DEFAULT_GEMINI_API_KEY_ENV_VAR, DEFAULT_PROMPT};
 use mawaku_gemini::craft_prompt;
 use mawaku_utils::{COMPONENT_MAX_LEN, DEFAULT_RANDOM_SUFFIX_LENGTH, component_token};
 use std::ffi::{OsStr, OsString};
@@ -7,6 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use toml::Value;
 
 static TEST_MUTEX: Mutex<()> = Mutex::new(());
 static TEMP_DIR_COUNTER: AtomicUsize = AtomicUsize::new(0);
@@ -87,7 +88,6 @@ fn run_warns_when_gemini_key_missing() {
             location: "Hakone, Japan".to_string(),
             season: None,
             time_of_day: None,
-            set_gemini_api_key: None,
         });
 
         let expected_prompt = craft_prompt(DEFAULT_PROMPT, "Hakone, Japan", None, None);
@@ -103,12 +103,18 @@ fn run_warns_when_gemini_key_missing() {
             context
                 .warnings
                 .iter()
-                .any(|warning| warning.contains("GEMINI_API_KEY is not set"))
+                .any(|warning| warning.contains("Gemini API key environment variable is missing"))
         );
 
         let config_path = expected_dir.join("config.toml");
         let contents = fs::read_to_string(config_path).expect("config written");
-        assert!(contents.contains(&format!("gemini_api_key = \"{}\"", DEFAULT_GEMINI_API_KEY)));
+        let parsed: Value = contents.parse().expect("config is valid TOML");
+        let env_var = parsed
+            .get("gemini_api")
+            .and_then(|value| value.get("api_key_env_var"))
+            .and_then(Value::as_str)
+            .expect("api_key_env_var exists");
+        assert_eq!(env_var, DEFAULT_GEMINI_API_KEY_ENV_VAR);
         assert!(contents.contains(&format!(
             "image_output_dir = \"{}\"",
             expected_dir.to_string_lossy()
@@ -121,30 +127,19 @@ fn run_warns_when_gemini_key_missing() {
 }
 
 #[test]
-fn run_updates_gemini_key_and_suppresses_warning() {
+fn run_uses_custom_env_var_from_config() {
     with_isolated_home(|home| {
+        let env_var = "CUSTOM_GEMINI_KEY";
+        let secret = OsString::from("secret-key");
+        set_env(env_var, secret.as_os_str());
         let context = run(Cli {
             location: "Hakone, Japan".to_string(),
             season: None,
             time_of_day: None,
-            set_gemini_api_key: Some("secret-key".to_string()),
         });
 
-        assert!(
-            context
-                .infos
-                .iter()
-                .any(|info| info.contains("Updated GEMINI_API_KEY"))
-        );
-        assert!(
-            !context
-                .warnings
-                .iter()
-                .any(|warning| warning.contains("GEMINI_API_KEY is not set"))
-        );
-
         assert!(context.config_ready);
-        assert_eq!(context.gemini_api_key.as_deref(), Some("secret-key"));
+        assert!(context.gemini_api_key.is_none());
         let expected_dir = home.join(".mawaku");
         assert_eq!(
             context.image_output_dir.as_deref(),
@@ -153,37 +148,42 @@ fn run_updates_gemini_key_and_suppresses_warning() {
 
         let config_path = expected_dir.join("config.toml");
         let contents = fs::read_to_string(&config_path).expect("config written");
-        assert!(contents.contains("gemini_api_key = \"secret-key\""));
-        assert!(contents.contains(&format!(
-            "image_output_dir = \"{}\"",
-            expected_dir.to_string_lossy()
-        )));
-        assert!(
-            !contents.contains("default_prompt"),
-            "default_prompt should no longer be stored in the config file"
+        let mut parsed: Value = contents.parse().expect("config is valid TOML");
+        let table = parsed
+            .as_table_mut()
+            .expect("config is a table")
+            .entry("gemini_api".to_string())
+            .or_insert_with(|| Value::Table(Default::default()));
+        let gemini_table = table.as_table_mut().expect("gemini_api is a table");
+        gemini_table.insert(
+            "api_key_env_var".to_string(),
+            Value::String(env_var.to_string()),
         );
+        let serialized = toml::to_string_pretty(&parsed).expect("serialize config");
+        fs::write(&config_path, serialized).expect("write updated config");
 
         let second_run = run(Cli {
             location: "Hakone, Japan".to_string(),
             season: None,
             time_of_day: None,
-            set_gemini_api_key: None,
         });
 
+        assert!(second_run.config_ready);
+        assert_eq!(second_run.gemini_api_key.as_deref(), Some("secret-key"));
         assert!(
             !second_run
                 .warnings
                 .iter()
-                .any(|warning| warning.contains("GEMINI_API_KEY is not set"))
+                .any(|warning| warning.contains("Gemini API key environment"))
         );
-        assert!(second_run.config_ready);
-        assert_eq!(second_run.gemini_api_key.as_deref(), Some("secret-key"));
         let expected_prompt = craft_prompt(DEFAULT_PROMPT, "Hakone, Japan", None, None);
         assert_eq!(second_run.prompt, expected_prompt);
         assert_eq!(
             second_run.image_output_dir.as_deref(),
             Some(expected_dir.as_path())
         );
+
+        remove_env(env_var);
     });
 }
 
@@ -193,7 +193,6 @@ fn image_name_context_builds_unique_file_stem() {
         location: "Hakone, Japan".to_string(),
         season: Some("Spring".to_string()),
         time_of_day: Some("Dusk".to_string()),
-        set_gemini_api_key: None,
     };
 
     let context = build_image_name_context(&cli);
@@ -218,7 +217,6 @@ fn image_name_context_truncates_long_components() {
         location: "Extremely Long Location Name That Keeps Going".to_string(),
         season: Some("Supercalifragilisticexpialidocious".to_string()),
         time_of_day: Some("Midnight Sun Time".to_string()),
-        set_gemini_api_key: None,
     };
 
     let context = build_image_name_context(&cli);

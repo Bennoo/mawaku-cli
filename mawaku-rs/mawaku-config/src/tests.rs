@@ -4,13 +4,18 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use toml::Value;
 
 static TEST_MUTEX: Mutex<()> = Mutex::new(());
 static TEMP_DIR_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 #[test]
-fn config_default_uses_empty_gemini_api_key() {
-    assert!(Config::default().gemini_api_key.is_empty());
+fn config_default_sets_gemini_api_env_var() {
+    let config = Config::default();
+    assert_eq!(
+        config.gemini_api.api_key_env_var,
+        DEFAULT_GEMINI_API_KEY_ENV_VAR
+    );
 }
 
 #[test]
@@ -20,15 +25,26 @@ fn config_default_sets_image_output_dir() {
 }
 
 #[test]
-fn load_or_init_creates_file_with_empty_gemini_api_key() {
+fn load_or_init_creates_file_with_default_gemini_api_env_var() {
     with_isolated_home(|_| {
         let outcome = load_or_init().expect("load default config");
         assert!(outcome.created);
-        assert_eq!(outcome.config.gemini_api_key, DEFAULT_GEMINI_API_KEY);
+        assert_eq!(
+            outcome.config.gemini_api.api_key_env_var,
+            DEFAULT_GEMINI_API_KEY_ENV_VAR
+        );
         assert!(!outcome.config.image_output_dir.trim().is_empty());
 
         let contents = fs::read_to_string(outcome.path).expect("read config");
-        assert!(contents.contains("gemini_api_key = \"\""));
+        let parsed: Value = contents.parse().expect("config is valid TOML");
+        let gemini = parsed
+            .get("gemini_api")
+            .and_then(Value::as_table)
+            .expect("gemini table exists");
+        assert_eq!(
+            gemini.get("api_key_env_var").and_then(Value::as_str),
+            Some(DEFAULT_GEMINI_API_KEY_ENV_VAR)
+        );
         assert!(contents.contains("image_output_dir ="));
         assert!(!contents.contains("default_prompt"));
     });
@@ -44,7 +60,7 @@ fn load_or_init_backfills_missing_image_output_dir() {
             &path,
             r#"
 default_prompt = "Test"
-gemini_api_key = ""
+gemini_api_key = "super-secret"
 "#,
         )
         .expect("write legacy config");
@@ -57,6 +73,36 @@ gemini_api_key = ""
         let contents = fs::read_to_string(&path).expect("read config");
         assert!(contents.contains(&format!("image_output_dir = \"{expected_dir}\"")));
         assert!(!contents.contains("default_prompt"));
+        assert!(!contents.contains("gemini_api_key"));
+        assert!(contents.contains("[gemini_api]"));
+    });
+}
+
+#[test]
+fn load_or_init_rewrites_legacy_environment_mapping() {
+    with_isolated_home(|home| {
+        let config_dir = home.join(".mawaku");
+        fs::create_dir_all(&config_dir).expect("create config dir");
+        let path = config_dir.join("config.toml");
+        fs::write(
+            &path,
+            r#"
+[gemini_api]
+environment = "staging"
+[gemini_api.environments]
+staging = "CUSTOM_GEMINI"
+"#,
+        )
+        .expect("write legacy config");
+
+        let outcome = load_or_init().expect("load rewritten config");
+        assert!(!outcome.created);
+        assert_eq!(outcome.config.gemini_api.api_key_env_var, "CUSTOM_GEMINI");
+
+        let contents = fs::read_to_string(&path).expect("read config");
+        assert!(contents.contains("api_key_env_var = \"CUSTOM_GEMINI\""));
+        assert!(!contents.contains("environment"));
+        assert!(!contents.contains("environments"));
     });
 }
 

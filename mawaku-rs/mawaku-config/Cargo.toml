@@ -1,9 +1,10 @@
 [package]
 name = "mawaku-config"
 version = "0.0.0"
-edition = "2024"
+edition.workspace = true
+license.workspace = true
+publish = false
 description = "Configuration loader for the Mawaku CLI"
-license = "MIT OR Apache-2.0"
 
 [lib]
 name = "mawaku_config"
