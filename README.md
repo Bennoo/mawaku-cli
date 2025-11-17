@@ -43,19 +43,41 @@ Craft richly lit video-call backdrops from a single prompt. **Mawaku** (間 *ma*
 
 ---
 
-## Precompiled Linux binary
+## Precompiled Linux binaries
 
-Prefer not to install Rust? Every GitHub Release now includes a `mawaku-linux-x86_64.tar.gz` archive built by CI. Download the asset from the project’s **Releases** page, extract it, and run the binary directly:
+Prefer not to install Rust? Every GitHub Release publishes ready-to-run archives built by CI. Pick the archive that matches your host CPU and follow the steps below.
+
 
 ```bash
-# Replace <TAG> with the published release tag and OWNER/REPO with this project path.
-curl -L -o mawaku-linux-x86_64.tar.gz https://github.com/Bennoo/mawaku-cli/releases/download/v0.0.1/mawaku-linux-x86_64.tar.gz
-tar -xzf mawaku-linux-x86_64.tar.gz
-chmod +x mawaku
-./mawaku --help
+TAG=v0.0.1          # replace with the release you want
 ```
 
-Move the extracted `mawaku` binary anywhere on your `PATH` (e.g., `/usr/local/bin`) to call it from any directory.
+### x86_64 hosts
+```bash
+ASSET=mawaku-${TAG}-linux-x86_64.tar.gz
+```
+
+### ARM64 hosts (e.g., dev container on Apple Silicon)
+
+```bash
+ASSET=mawaku-${TAG}-linux-arm64.tar.gz
+```
+
+### Download, extract, and install
+```bash
+curl -L -o "$ASSET" "https://github.com/Bennoo/mawaku-cli/releases/download/${TAG}/${ASSET}"
+mkdir -p ~/.local/bin
+tar -xzf "$ASSET" -C ~/.local/bin mawaku
+chmod +x ~/.local/bin/mawaku
+```
+
+Move the extracted `mawaku` binary anywhere on your `PATH` (for example, `/usr/local/bin` or `~/.local/bin`) to invoke it from any directory.
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+mawaku --help
+```
+
 
 ---
 
