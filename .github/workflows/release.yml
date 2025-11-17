@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  linux-arm64:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mawaku-rs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install ARM64 linker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build Mawaku CLI (linux/arm64)
+        run: cargo build --release --target aarch64-unknown-linux-gnu -p mawaku
+
+      - name: Package binary
+        run: |
+          ARTIFACT="mawaku-${{ github.ref_name }}-linux-arm64.tar.gz"
+          tar -czf "$ARTIFACT" -C target/aarch64-unknown-linux-gnu/release mawaku
+          echo "ASSET_NAME=$ARTIFACT" >> "$GITHUB_ENV"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mawaku-rs/${{ env.ASSET_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
