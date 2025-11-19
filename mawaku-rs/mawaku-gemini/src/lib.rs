@@ -4,7 +4,7 @@ use thiserror::Error;
 
 pub const DEFAULT_IMG_MODEL_VERSION: &str = "imagen-4.0-ultra-generate-001";
 pub const DEFAULT_TEXT_MODEL_VERSION: &str = "gemini-2.5-flash";
-pub const DEFAULT_SAMPLE_COUNT: u32 = 2;
+pub const DEFAULT_SAMPLE_COUNT: u32 = 3;
 pub const DEFAULT_ASPECT_RATIO: &str = "16:9";
 
 fn normalized(input: &str) -> Option<&str> {
@@ -291,6 +291,7 @@ pub fn generate_place_description(
     let prompt = format!(
         "Describe the place called {location} in the {season}. Provide a general ambiance description, \
          a list of potential items that might be found in a cozy interior view of this place, \
+         a list of popular features or attractions associated with this location, \
          and a list of keywords that capture the essence of this location."
     );
 
