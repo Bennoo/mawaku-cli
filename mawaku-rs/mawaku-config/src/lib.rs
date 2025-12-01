@@ -12,8 +12,8 @@ pub const DEFAULT_PROMPT: &str = "\
 Photo, hyper-photorealistic, 4K, HDR, studio lighting, indistinguishable from a real photo. \
 Strictly avoid synthetic, CGI, or video-game-style visuals. \
 Use a wide-angle lens with minimal distortion so proportions stay natural and avoid any fisheye warping. \
-Show a very spacious room with generous depth behind the subject, cosy modern details, and believable scale. \
-Keep the foreground empty never include monitors, screens, desk edges, or camera equipment. \
+Show a very spacious room with generous depth, cosy modern details, and believable scale. \
+Keep the foreground empty never include monitors, screens, desk edges, or camera equipment in the close-up. \
 Don't place any people or body parts in the frame, and avoid smoke in the scene. \
 Present an unobstructed and clearview of the room with a large modern window revealing a beautiful outdoor scene. \
 Camera angle: professional webcam-style vantage facing into the room while hovering just in front of the desk so no furniture crosses the frame edge. \
