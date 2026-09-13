@@ -130,59 +130,48 @@ mawaku --help
 
 ## Spotlight Prompts
 
-Get inspired by a few curated scenes. Each command runs from the `mawaku-rs/` workspace root.
+These examples use the current CLI and background framing. Run each command from
+the `mawaku-rs/` workspace root.
 
-<table>
-  <tr>
-    <th>Scene</th>
-    <th>Command</th>
-    <th>Mood</th>
-  </tr>
-  <tr>
-    <td><strong>Italian Coastal Morning</strong></td>
-    <td><code>cargo run -p mawaku -- --location "Italian coastal village" --season summer --time-of-day morning</code></td>
-    <td>Sunlit cliffside homes and warm café interiors for breezy AM energy.</td>
-  </tr>
-  <tr>
-    <td colspan="3" align="center">
-      <img src="docs/examples/mawaku-italian-co-summer-morning-p1-TH6RX.png" alt="Italian coastal morning render 1" width="240" />
-      <img src="docs/examples/mawaku-italian-co-summer-morning-p2-XOKB0.png" alt="Italian coastal morning render 2" width="240" />
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Santorini Nightscape</strong></td>
-    <td><code>cargo run -p mawaku -- --location "Santorini, Greece" --season summer --time-of-day night</code></td>
-    <td>Lantern-lit terraces with caldera views for dramatic twilight calls.</td>
-  </tr>
-  <tr>
-    <td colspan="3" align="center">
-      <img src="docs/examples/mawaku-santorini-summer-night-p1-V3DAZ.png" alt="Santorini night render 1" width="240" />
-      <img src="docs/examples/mawaku-santorini-summer-night-p2-0S7LH.png" alt="Santorini night render 2" width="240" />
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Zermatt Midnight Chalet</strong></td>
-    <td><code>cargo run -p mawaku -- --location "Zermatt alpine village, Switzerland" --season winter --time-of-day midnight</code></td>
-    <td>Snow-dusted timber chalets with Matterhorn silhouettes and ember glow.</td>
-  </tr>
-  <tr>
-    <td colspan="3" align="center">
-      <img src="docs/examples/mawaku-zermatt-al-winter-midnight-p1-1H3PX.png" alt="Zermatt winter midnight render 1" width="240" />
-      <img src="docs/examples/mawaku-zermatt-al-winter-midnight-p2-CHDG7.png" alt="Zermatt winter midnight render 2" width="240" />
-    </td>
-  </tr>
-  <tr>
-    <td><strong>El Nido Monsoon Sunrise</strong></td>
-    <td><code>cargo run -p mawaku -- --location "El Nido lagoon, Palawan, Philippines" --season monsoon --time-of-day sunrise</code></td>
-    <td>Tropical loft wrapped in sunrise haze and karst cliffs after summer rain.</td>
-  </tr>
-  <tr>
-    <td colspan="3" align="center">
-      <img src="docs/examples/mawaku-el-nido-la-monsoon-sunrise-p1-GF4DI.png" alt="El Nido monsoon sunrise render 1" width="240" />
-      <img src="docs/examples/mawaku-el-nido-la-monsoon-sunrise-p2-GRYDJ.png" alt="El Nido monsoon sunrise render 2" width="240" />
-    </td>
-  </tr>
-</table>
+### Italian Coastal Morning
+
+An inviting coastal living room in soft summer morning light.
+
+```bash
+cargo run -p mawaku -- --location "Italian coastal village" --season summer --time-of-day morning
+```
+
+![Italian Coastal Morning, regenerated with the current CLI](docs/examples/italian-coastal-morning.jpg)
+
+### Santorini Nightscape
+
+A comfortable island interior with restrained warm lamps and a nighttime exterior.
+
+```bash
+cargo run -p mawaku -- --location "Santorini, Greece" --season summer --time-of-day night
+```
+
+![Santorini Nightscape, regenerated with the current CLI](docs/examples/santorini-nightscape.jpg)
+
+### Zermatt Midnight Chalet
+
+A lived-in alpine room with warm indoor lighting on a winter night.
+
+```bash
+cargo run -p mawaku -- --location "Zermatt alpine village, Switzerland" --season winter --time-of-day midnight
+```
+
+![Zermatt Midnight Chalet, regenerated with the current CLI](docs/examples/zermatt-midnight-chalet.jpg)
+
+### El Nido Monsoon Sunrise
+
+A tropical home overlooking the local landscape at monsoon sunrise.
+
+```bash
+cargo run -p mawaku -- --location "El Nido lagoon, Palawan, Philippines" --season monsoon --time-of-day sunrise
+```
+
+![El Nido Monsoon Sunrise, regenerated with the current CLI](docs/examples/el-nido-monsoon-sunrise.jpg)
 
 ### Bergen Harbor Morning
 
@@ -209,7 +198,7 @@ cargo run -p mawaku -- \
 
 ![Fictional space-station lounge with Earth visible through curved observation windows](docs/examples/earth-orbit-lounge.jpg)
 
-Both examples were generated with the CLI using the commands above and the default
+All six examples were generated with the CLI using the commands above and the default
 single-image count. Re-running them produces new variations.
 
 ---
