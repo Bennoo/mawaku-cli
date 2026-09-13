@@ -11,7 +11,7 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential curl git ca-certificates \
-    pkg-config clang musl-tools libssl-dev just && \
+    pkg-config clang musl-tools libssl-dev just zsh jq && \
     rm -rf /var/lib/apt/lists/*
 
 # Install nano editor
