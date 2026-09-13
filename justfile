@@ -26,6 +26,17 @@ bump version:
       exit 1
     fi
 
+    current=$(grep -m1 -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' {{CLI_TOML}} | sed -E 's/^version = "(.*)"/\1/')
+    IFS='.' read -r cur_major cur_minor cur_patch <<< "$current"
+    IFS='.' read -r new_major new_minor new_patch <<< "$ver"
+
+    if (( new_major < cur_major )) || \
+       (( new_major == cur_major && new_minor < cur_minor )) || \
+       (( new_major == cur_major && new_minor == cur_minor && new_patch <= cur_patch )); then
+      echo "error: $ver is not greater than current version $current" >&2
+      exit 1
+    fi
+
     if [[ -n "$(git status --porcelain)" ]]; then
       echo "error: working tree is not clean, commit or stash first" >&2
       exit 1
