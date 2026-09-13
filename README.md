@@ -184,6 +184,34 @@ Get inspired by a few curated scenes. Each command runs from the `mawaku-rs/` wo
   </tr>
 </table>
 
+### Bergen Harbor Morning
+
+A cozy Norwegian home with soft autumn light and a glimpse of colorful waterfront houses.
+
+```bash
+cargo run -p mawaku -- \
+  --location "Bergen, Norway, a cozy harbor-side home with a subtle view of colorful wooden waterfront houses" \
+  --season autumn \
+  --time-of-day morning
+```
+
+![Bergen harbor home with a clear foreground and autumn morning light](docs/examples/bergen-harbor-morning.jpg)
+
+### Earth Orbit Lounge · Fantasy
+
+A fictional space-station living room with curved observation windows overlooking Earth at orbital sunrise.
+
+```bash
+cargo run -p mawaku -- \
+  --location "A fictional space station orbiting Earth, a spacious lived-in residential lounge with curved observation windows showing the blue Earth and its atmospheric rim against space; retain the orbital setting rather than an Earth-based house" \
+  --time-of-day "orbital sunrise, soft sunlight on Earth and restrained warm interior lighting"
+```
+
+![Fictional space-station lounge with Earth visible through curved observation windows](docs/examples/earth-orbit-lounge.jpg)
+
+Both examples were generated with the CLI using the commands above and the default
+single-image count. Re-running them produces new variations.
+
 ---
 
 ## Configuration
