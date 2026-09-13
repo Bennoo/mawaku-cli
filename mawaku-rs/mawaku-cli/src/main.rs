@@ -104,7 +104,7 @@ fn build_structured_prompt(
             let items = list_or_unspecified(&details.items);
             let keywords = list_or_unspecified(&details.keywords);
             format!(
-                "Complete place description:\nUse one or many of these details:\nAmbiance: {}\nItems: {}\nKeywords: {}",
+                "Complete place description:\nOptional local references: select only two or three compatible details, not the whole list. Keep them in the middle or far background. These references must not override camera geometry, room layout or the requested time of day.\nAmbiance: {}\nItems: {}\nKeywords: {}",
                 ambiance, items, keywords
             )
         }
@@ -116,7 +116,7 @@ fn build_structured_prompt(
     sections.push(place_section);
 
     let timing_section = format!(
-        "Scene timing:\n{}\n{}",
+        "Scene timing:\n{}\n{}\nUse this timing for all light sources and the exterior view. Ignore conflicting lighting suggestions in the local references. If timing is unspecified, use soft overcast daytime light. If season is unspecified, keep seasonal decoration neutral.",
         format_context_line("Season", season),
         format_context_line("Time of day", time_of_day),
     );

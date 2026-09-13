@@ -141,6 +141,16 @@ Get inspired by a few curated scenes. Each command runs from the `mawaku-rs/` wo
 
 ## Configuration
 
+The image prompt uses a level webcam at seated eye height, looking into a spacious,
+lived-in room with furniture several metres away and a quiet centre for the caller.
+Local references are limited to a few subtle residential details. `--time-of-day`
+controls indoor lighting and the exterior view; omitted timing defaults to soft,
+overcast daytime light. The prompt avoids dramatic HDR lighting and staged showroom styling.
+
+The base image instructions are defined in `mawaku-rs/mawaku-config/src/lib.rs`
+(`DEFAULT_PROMPT`), not in the generated config file. Re-run `cargo run` after editing
+them to rebuild the CLI and generate a new background.
+
 Mawaku writes persistent settings to `~/.mawaku/config.toml` the first time you run the CLI. Key entries include:
 
 | Key / Section       | Purpose                                                                                      |

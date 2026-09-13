@@ -326,10 +326,15 @@ pub fn generate_place_description(
     }
 
     let prompt = format!(
-        "Describe the place called {location} in the {season}. Provide a general ambiance description, \
-         a list of potential items that might be found in a cozy interior view of this place, \
-         a list of popular features or attractions associated with this location, \
-         and a list of keywords that capture the essence of this location."
+        "Suggest restrained visual references for a believable, spacious lived-in home in {location} during {season}, \
+         to appear behind someone on a webcam call. Return ambiance, items and keywords. \
+         Ambiance: briefly describe plausible residential architecture, materials and seasonal vegetation. \
+         Items: at most three ordinary furnishings or subtle local details placed in the middle or far background. \
+         Keywords: at most four material, colour or architectural cues. \
+         Describe only visible features. Do not prescribe time of day, sunlight, lighting or camera position; \
+         these are specified separately by the image prompt. Avoid tourist attractions, landmark collections, \
+         food close-ups, souvenir displays, people, smoke and references to sounds or smells. \
+         Keep the room practical and understated rather than themed or luxurious."
     );
 
     // Build the schema for structured output

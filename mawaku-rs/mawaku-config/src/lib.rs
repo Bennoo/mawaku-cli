@@ -9,17 +9,27 @@ use thiserror::Error;
 use toml::Value;
 
 pub const DEFAULT_PROMPT: &str = "\
-Photo, hyper-photorealistic, 4K, HDR, studio lighting, indistinguishable from a real photo. \
-Strictly avoid synthetic, CGI, or video-game-style visuals. \
-Use a wide-angle lens with minimal distortion so proportions stay natural and avoid any fisheye warping. \
-Show a very spacious room with generous depth, cosy modern details, and believable scale. \
-Keep the foreground empty never include monitors, screens, desk edges, or camera equipment in the close-up. \
-Don't place any people or body parts in the frame, and avoid smoke in the scene. \
-Present an unobstructed and clearview of the room with a large modern window revealing a beautiful outdoor scene. \
-Camera angle: professional webcam-style vantage facing into the room while hovering just in front of the desk so no furniture crosses the frame edge. \
-Camera height: slightly above seated eye level, matching a real highly positioned webcam’s perspective. \
-Camera location: prefer a corner vantage that reveals depth. \
-The scene should feel like the believable background behind someone on a video call.";
+Create a single 16:9 photographic background for a video call: a real lived-in room seen by a good webcam, temporarily without its occupant. \
+The result must have convincing scale, materials and light.\n\n\
+Camera and framing: the webcam is mounted on a monitor at a desk near one side of the room, about 1.25 metres above the floor. \
+It faces past the absent seated caller into the room behind them; the desk and monitor are behind the camera and out of view. \
+Keep the camera level, with a natural moderately wide field of view, approximately a 28-35 mm full-frame equivalent lens. \
+Use straight verticals and normal furniture proportions, without fisheye or stretched corners. \
+Keep the central area where a caller's head and shoulders will appear visually quiet; place distinctive furnishings to either side.\n\n\
+Space and layout: show a generously sized but plausible home living room or study, with the back wall roughly 4-6 metres away. \
+Leave open floor between the camera and the furniture. Use a few furnishings in the middle distance and a farther wall or open doorway to establish depth. \
+Let two walls meet off-centre rather than using a perfectly symmetrical composition. \
+Avoid close-up furniture, an empty echoing hall, or an exaggerated luxury showroom.\n\n\
+Light and photographic character: follow the requested time of day consistently indoors and outside. \
+Use plausible soft window light from the side and practical room lamps where appropriate. \
+At dusk, show subdued cool exterior light and restrained warm indoor lamps; at night, rely on indoor lighting and a dark exterior. \
+Keep the room readable with natural exposure, gentle shadows, neutral colours and restrained contrast. \
+A side window may show a modest local view, but must not dominate the frame or become a bright backlit rectangle. \
+Render subtle fabric texture, wood grain, matte paint, slight wear and small everyday irregularities. \
+Keep the background naturally in focus, without portrait blur, artificial sharpening, HDR halos, dramatic sunbeams or cinematic colour grading.\n\n\
+Finish: a tidy but inhabited room with a few casually placed objects, not a staged catalogue photograph or a CGI interior. \
+No people, body parts, visible camera equipment, text, logos, watermarks, smoke or fog. \
+Camera geometry, spacious composition and the requested lighting take priority over decorative location details.";
 pub const DEFAULT_GEMINI_API_KEY_ENV_VAR: &str = "GEMINI_API_KEY";
 
 #[derive(Debug, Error)]
