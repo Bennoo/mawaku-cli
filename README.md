@@ -253,7 +253,11 @@ window, glazed doors or a terrace opening occupies roughly one third of the imag
 width to one side, giving the exterior a substantial, unobstructed place in the
 composition. Balanced exposure preserves outdoor detail and a readable interior;
 glazing or enclosure stays appropriate to the weather and setting.
-Local references are limited to a few subtle residential details. `--time-of-day`
+Each interior includes a locally distinctive wall decoration and a complementary
+craft object or textile, with specific regional motifs, materials and colours. The
+most specific location guides the choices; fictional settings use coherent in-world
+decor. With `--count`, each variant receives a different decorative pairing when
+available, while keeping the room spacious and the exterior opening clear. `--time-of-day`
 controls indoor lighting and the exterior view; omitted timing defaults to soft,
 overcast daytime light. The prompt avoids dramatic HDR lighting and staged showroom styling.
 

@@ -350,9 +350,9 @@ fn variants_mix_references_and_preserve_constraints() {
         assert!(prompt.contains("Time of day: morning"));
         assert!(prompt.contains("Ambiance: Quiet local home"));
     }
-    assert!(prompts[0].contains("Items: cedar, paper"));
-    assert!(prompts[1].contains("Items: linen, stone"));
-    assert!(prompts[2].contains("Items: ceramics, bamboo"));
+    assert!(prompts[0].contains("Items: cedar"));
+    assert!(prompts[1].contains("Items: linen"));
+    assert!(prompts[2].contains("Items: ceramics"));
     assert_eq!(
         build_prompt_variants("Rules", Some(&description), None, None, 1),
         vec![build_structured_prompt(

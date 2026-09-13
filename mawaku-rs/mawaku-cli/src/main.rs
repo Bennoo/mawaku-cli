@@ -95,7 +95,7 @@ fn build_structured_prompt(
             let items = list_or_unspecified(&details.items);
             let keywords = list_or_unspecified(&details.keywords);
             format!(
-                "Complete place description:\nOptional local references: select only two or three compatible details, not the whole list. Keep them in the middle or far background. These references must not override camera geometry, room layout or the requested time of day.\nAmbiance: {}\nItems: {}\nKeywords: {}",
+                "Complete place description:\nLocal interior references: select one coherent decorative pairing from Items, including its wall decoration and complementary object or textile. Render their specific materials and motifs visibly in the room, on a side wall and in the middle distance. Use Keywords to guide finishes and palette. Keep the caller area and broad exterior opening clear. These details must not override camera geometry, room layout or the requested time of day.\nAmbiance: {}\nItems: {}\nKeywords: {}",
                 ambiance, items, keywords
             )
         }
@@ -140,7 +140,7 @@ fn build_prompt_variants(
     (0..usize::from(count)).map(|index| {
         let selected = description.map(|details| PlaceDescription {
             ambiance: details.ambiance.clone(),
-            items: distribute_prompt_details(&details.items, index, usize::from(count), 2),
+            items: distribute_prompt_details(&details.items, index, usize::from(count), 1),
             keywords: distribute_prompt_details(&details.keywords, index, usize::from(count), 1),
         });
         let mut prompt = build_structured_prompt(instructions, selected.as_ref(), season, time_of_day);

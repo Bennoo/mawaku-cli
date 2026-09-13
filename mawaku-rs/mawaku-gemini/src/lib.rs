@@ -326,16 +326,19 @@ pub fn generate_place_description(
     }
 
     let prompt = format!(
-        "Suggest restrained visual references for a believable, spacious lived-in home in {location} during {season}, \
+        "Suggest locally distinctive interior references for a believable, spacious lived-in home in {location} during {season}, \
          to appear behind someone on a webcam call. Return ambiance, items and keywords. \
-         Ambiance: briefly describe plausible residential architecture, materials and seasonal vegetation. \
-         Items: at most three appealing, comfortable furnishings or subtle local details placed in the middle or far background, chosen to work together. \
-         Keywords: at most four material, colour or architectural cues. \
+         Ambiance: describe residential architecture, locally characteristic furniture forms, materials and palette, plus a plausible exterior connection. \
+         Items: provide three alternative, coherent decorative pairings. Each item must describe BOTH one specific wall decoration AND one complementary craft object or textile from this region, with their visible motifs, colours, materials and workmanship. \
+         Each pairing should work on its own in a spacious home; vary the craft or motif between pairings. Place wall art on a side wall and the object or textile in the middle distance. \
+         Prefer the most specific geography supplied over generic national imagery. Draw on plausible local craft and domestic design traditions without inventing named traditions or reducing the place to stereotypes. \
+         Keywords: at most four locally distinctive material, pattern, colour or architectural cues, rather than generic mood words. \
          Describe only visible features. Do not prescribe time of day, sunlight, lighting or camera position; \
-         these are specified separately by the image prompt. Avoid tourist attractions, landmark collections, \
-         food close-ups, souvenir displays, people, smoke and references to sounds or smells. \
-         Suggest a beautiful, welcoming home someone would want to spend time in: tactile materials, well-cared-for furnishings, \
-         a comfortable place to linger and a plausible connection to the outdoors. Keep the choices attainable, personal and locally appropriate."
+         these are specified separately by the image prompt. Keep the broad exterior opening and central caller area clear. \
+         Avoid generic sofa-plant-vase lists, tourist attractions, landmark collections, flags, souvenir displays, \
+         food close-ups, people, smoke and references to sounds or smells. \
+         For fictional settings, suggest coherent in-world wall art and personal objects matching that setting. \
+         Keep the choices attainable, personal and appropriate to a comfortable home rather than a museum or themed hotel."
     );
 
     // Build the schema for structured output
