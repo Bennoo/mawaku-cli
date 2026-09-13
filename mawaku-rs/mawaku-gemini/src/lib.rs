@@ -2,9 +2,8 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-pub const DEFAULT_IMG_MODEL_VERSION: &str = "imagen-4.0-ultra-generate-001";
-pub const DEFAULT_TEXT_MODEL_VERSION: &str = "gemini-2.5-flash";
-pub const DEFAULT_SAMPLE_COUNT: u32 = 3;
+pub const DEFAULT_IMG_MODEL_VERSION: &str = "gemini-3-pro-image";
+pub const DEFAULT_TEXT_MODEL_VERSION: &str = "gemini-3.6-flash";
 pub const DEFAULT_ASPECT_RATIO: &str = "16:9";
 
 fn normalized(input: &str) -> Option<&str> {
@@ -65,37 +64,66 @@ pub enum GeminiError {
     JsonParse(#[from] serde_json::Error),
 }
 
-#[derive(Debug, Deserialize)]
-pub struct PredictResponse {
-    #[serde(default)]
-    pub predictions: Vec<PredictPrediction>,
+#[derive(Debug)]
+pub struct ImageGenerationResponse {
+    pub images: Vec<GeneratedImage>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct PredictPrediction {
-    #[serde(rename = "bytesBase64Encoded")]
-    pub bytes_base64_encoded: Option<String>,
-    #[serde(rename = "mimeType")]
+#[derive(Debug)]
+pub struct GeneratedImage {
+    pub data: String,
     pub mime_type: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
-struct PredictRequest<'a> {
-    instances: Vec<Instance<'a>>,
-    parameters: Parameters,
+struct ImageRequest<'a> {
+    contents: Vec<Content<'a>>,
+    #[serde(rename = "generationConfig")]
+    generation_config: ImageGenerationConfig<'a>,
 }
 
 #[derive(Debug, Serialize)]
-struct Instance<'a> {
-    prompt: &'a str,
+struct ImageGenerationConfig<'a> {
+    #[serde(rename = "responseModalities")]
+    response_modalities: Vec<&'a str>,
+    #[serde(rename = "imageConfig")]
+    image_config: ImageConfig<'a>,
 }
 
 #[derive(Debug, Serialize)]
-struct Parameters {
-    #[serde(rename = "sampleCount")]
-    sample_count: u32,
-    #[serde(rename = "aspectRatio", skip_serializing_if = "Option::is_none")]
-    aspect_ratio: Option<String>,
+struct ImageConfig<'a> {
+    #[serde(rename = "aspectRatio")]
+    aspect_ratio: &'a str,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImageGenerateContentResponse {
+    #[serde(default)]
+    candidates: Vec<ImageCandidate>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImageCandidate {
+    content: ImageContentResponse,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImageContentResponse {
+    #[serde(default)]
+    parts: Vec<ImagePartResponse>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ImagePartResponse {
+    #[serde(rename = "inlineData")]
+    inline_data: Option<InlineData>,
+}
+
+#[derive(Debug, Deserialize)]
+struct InlineData {
+    data: String,
+    #[serde(rename = "mimeType")]
+    mime_type: Option<String>,
 }
 
 // Text generation request structures matching Gemini API format
@@ -173,13 +201,15 @@ impl std::fmt::Display for PlaceDescription {
     }
 }
 
-impl<'a> PredictRequest<'a> {
-    fn new(prompt: &'a str, sample_count: u32, aspect_ratio: Option<String>) -> Self {
+impl<'a> ImageRequest<'a> {
+    fn new(prompt: &'a str, aspect_ratio: &'a str) -> Self {
         Self {
-            instances: vec![Instance { prompt }],
-            parameters: Parameters {
-                sample_count,
-                aspect_ratio,
+            contents: vec![Content {
+                parts: vec![Part { text: prompt }],
+            }],
+            generation_config: ImageGenerationConfig {
+                response_modalities: vec!["IMAGE"],
+                image_config: ImageConfig { aspect_ratio },
             },
         }
     }
@@ -207,7 +237,7 @@ impl<'a> TextRequest<'a> {
 
 fn image_endpoint_url() -> String {
     format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/{model_version}:predict",
+        "https://generativelanguage.googleapis.com/v1beta/models/{model_version}:generateContent",
         model_version = DEFAULT_IMG_MODEL_VERSION
     )
 }
@@ -219,27 +249,20 @@ fn text_endpoint_url() -> String {
     )
 }
 
-/// Submit an image generation request to Gemini's Imagen 4 API.
-///
-/// The request targets Gemini's hosted Imagen 4 endpoint. Future iterations can
-/// expose configuration hooks for model selection and regional routing.
+/// Submit an image generation request to Gemini's native image-generation API.
 ///
 /// # Errors
 ///
 /// Returns [`GeminiError::MissingApiKey`] when the provided API key is empty or
 /// whitespace only. Network and HTTP errors are surfaced via `reqwest`.
-pub fn generate_image(api_key: &str, prompt: &str) -> Result<PredictResponse, GeminiError> {
+pub fn generate_image(api_key: &str, prompt: &str) -> Result<ImageGenerationResponse, GeminiError> {
     if api_key.trim().is_empty() {
         return Err(GeminiError::MissingApiKey);
     }
 
     let client = Client::new();
     let url = image_endpoint_url();
-    let request_body = PredictRequest::new(
-        prompt,
-        DEFAULT_SAMPLE_COUNT,
-        Some(DEFAULT_ASPECT_RATIO.to_string()),
-    );
+    let request_body = ImageRequest::new(prompt, DEFAULT_ASPECT_RATIO);
 
     let response = client
         .post(url)
@@ -248,8 +271,22 @@ pub fn generate_image(api_key: &str, prompt: &str) -> Result<PredictResponse, Ge
         .send()?;
 
     let response = response.error_for_status()?;
-    let parsed = response.json::<PredictResponse>()?;
-    Ok(parsed)
+    let parsed = response.json::<ImageGenerateContentResponse>()?;
+    Ok(image_generation_response(parsed))
+}
+
+fn image_generation_response(response: ImageGenerateContentResponse) -> ImageGenerationResponse {
+    let images = response
+        .candidates
+        .into_iter()
+        .flat_map(|candidate| candidate.content.parts)
+        .filter_map(|part| part.inline_data)
+        .map(|inline_data| GeneratedImage {
+            data: inline_data.data,
+            mime_type: inline_data.mime_type,
+        })
+        .collect();
+    ImageGenerationResponse { images }
 }
 
 /// Submit a text generation request to Gemini's API.

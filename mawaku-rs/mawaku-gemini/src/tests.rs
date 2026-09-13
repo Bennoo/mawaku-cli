@@ -2,12 +2,15 @@ use super::*;
 
 #[test]
 fn serialize_request_matches_expected_shape() {
-    let request = PredictRequest::new("A cozy home office", DEFAULT_SAMPLE_COUNT, None);
+    let request = ImageRequest::new("A cozy home office", DEFAULT_ASPECT_RATIO);
     let value = serde_json::to_value(request).expect("serialize request");
 
     let expected = serde_json::json!({
-        "instances": [{"prompt": "A cozy home office"}],
-        "parameters": {"sampleCount": DEFAULT_SAMPLE_COUNT},
+        "contents": [{"parts": [{"text": "A cozy home office"}]}],
+        "generationConfig": {
+            "responseModalities": ["IMAGE"],
+            "imageConfig": {"aspectRatio": DEFAULT_ASPECT_RATIO},
+        },
     });
 
     assert_eq!(value, expected);
@@ -43,30 +46,31 @@ fn empty_api_key_is_rejected() {
 #[test]
 fn endpoint_uses_defaults() {
     let expected = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/{DEFAULT_IMG_MODEL_VERSION}:predict"
+        "https://generativelanguage.googleapis.com/v1beta/models/{DEFAULT_IMG_MODEL_VERSION}:generateContent"
     );
     assert_eq!(image_endpoint_url(), expected);
 }
 
 #[test]
-fn parses_prediction_payload_with_base64() {
+fn parses_generated_image_payload_with_base64() {
     let json = r#"
     {
-        "predictions": [
-            {
-                "bytesBase64Encoded": "aGVsbG8=",
-                "mimeType": "image/png"
+        "candidates": [{
+            "content": {
+                "parts": [
+                    {"text": "Here is your image."},
+                    {"inlineData": {"data": "aGVsbG8=", "mimeType": "image/png"}}
+                ]
             }
-        ]
+        }]
     }
     "#;
 
-    let response: PredictResponse = serde_json::from_str(json).expect("parse example response");
-    assert_eq!(response.predictions.len(), 1);
-
-    let prediction = &response.predictions[0];
-    assert_eq!(prediction.bytes_base64_encoded.as_deref(), Some("aGVsbG8="));
-    assert_eq!(prediction.mime_type.as_deref(), Some("image/png"));
+    let raw: ImageGenerateContentResponse = serde_json::from_str(json).expect("parse response");
+    let response = image_generation_response(raw);
+    assert_eq!(response.images.len(), 1);
+    assert_eq!(response.images[0].data, "aGVsbG8=");
+    assert_eq!(response.images[0].mime_type.as_deref(), Some("image/png"));
 }
 
 #[test]

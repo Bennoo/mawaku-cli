@@ -1,7 +1,7 @@
 use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init};
 use mawaku_gemini::{
-    GeminiError, PlaceDescription, PredictResponse, craft_prompt, generate_image,
+    GeminiError, ImageGenerationResponse, PlaceDescription, craft_prompt, generate_image,
     generate_place_description,
 };
 use mawaku_image::{SaveImageOptions, save_base64_image};
@@ -45,7 +45,7 @@ struct Cli {
 fn generate_image_with_progress(
     api_key: &str,
     prompt: &str,
-) -> Option<Result<PredictResponse, GeminiError>> {
+) -> Option<Result<ImageGenerationResponse, GeminiError>> {
     let api_key = api_key.to_string();
     let prompt = prompt.to_string();
 
@@ -175,40 +175,25 @@ fn main() {
         }
         match generate_image_with_progress(api_key, &prompt) {
             Some(Ok(response)) => {
-                eprintln!(
-                    "Gemini generated {} prediction(s).",
-                    response.predictions.len()
-                );
+                eprintln!("Gemini generated {} image(s).", response.images.len());
 
-                for (index, prediction) in response.predictions.iter().enumerate() {
+                for (index, generated_image) in response.images.iter().enumerate() {
                     let display_index = index + 1;
-                    match prediction.bytes_base64_encoded.as_deref() {
-                        Some(encoded) => {
-                            let file_stem = image_name_context.file_stem(display_index);
-                            let output_dir = context.image_output_dir.as_deref();
-                            let options = SaveImageOptions {
-                                file_stem: Some(file_stem.as_str()),
-                                mime_type: prediction.mime_type.as_deref(),
-                                output_dir,
-                            };
+                    let file_stem = image_name_context.file_stem(display_index);
+                    let output_dir = context.image_output_dir.as_deref();
+                    let options = SaveImageOptions {
+                        file_stem: Some(file_stem.as_str()),
+                        mime_type: generated_image.mime_type.as_deref(),
+                        output_dir,
+                    };
 
-                            match save_base64_image(encoded, options) {
-                                Ok(path) => {
-                                    eprintln!(
-                                        "Saved prediction #{display_index} to {}",
-                                        path.display()
-                                    );
-                                }
-                                Err(error) => {
-                                    eprintln!(
-                                        "Warning: failed to save prediction #{display_index} ({error})."
-                                    );
-                                }
-                            }
+                    match save_base64_image(&generated_image.data, options) {
+                        Ok(path) => {
+                            eprintln!("Saved prediction #{display_index} to {}", path.display());
                         }
-                        None => {
+                        Err(error) => {
                             eprintln!(
-                                "Warning: prediction #{display_index} did not include encoded image bytes."
+                                "Warning: failed to save prediction #{display_index} ({error})."
                             );
                         }
                     }
