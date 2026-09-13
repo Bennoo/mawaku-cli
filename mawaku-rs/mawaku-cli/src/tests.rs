@@ -94,6 +94,7 @@ fn remove_env(key: &str) {
 fn run_warns_when_gemini_key_missing() {
     with_isolated_home(|home| {
         let context = run(Cli {
+            count: 1,
             location: "Hakone, Japan".to_string(),
             season: None,
             time_of_day: None,
@@ -142,6 +143,7 @@ fn run_uses_custom_env_var_from_config() {
         let secret = OsString::from("secret-key");
         set_env(env_var, secret.as_os_str());
         let context = run(Cli {
+            count: 1,
             location: "Hakone, Japan".to_string(),
             season: None,
             time_of_day: None,
@@ -172,6 +174,7 @@ fn run_uses_custom_env_var_from_config() {
         fs::write(&config_path, serialized).expect("write updated config");
 
         let second_run = run(Cli {
+            count: 1,
             location: "Hakone, Japan".to_string(),
             season: None,
             time_of_day: None,
@@ -199,6 +202,7 @@ fn run_uses_custom_env_var_from_config() {
 #[test]
 fn image_name_context_builds_unique_file_stem() {
     let cli = Cli {
+        count: 1,
         location: "Hakone, Japan".to_string(),
         season: Some("Spring".to_string()),
         time_of_day: Some("Dusk".to_string()),
@@ -223,6 +227,7 @@ fn image_name_context_builds_unique_file_stem() {
 #[test]
 fn image_name_context_truncates_long_components() {
     let cli = Cli {
+        count: 1,
         location: "Extremely Long Location Name That Keeps Going".to_string(),
         season: Some("Supercalifragilisticexpialidocious".to_string()),
         time_of_day: Some("Midnight Sun Time".to_string()),
@@ -288,4 +293,71 @@ fn build_structured_prompt_falls_back_to_placeholders() {
     assert!(prompt.contains("Keywords: Unspecified"));
     assert!(prompt.contains("Season: Unspecified"));
     assert!(prompt.contains("Time of day: Unspecified"));
+}
+
+#[test]
+fn count_defaults_and_bounds() {
+    assert_eq!(
+        Cli::try_parse_from(["mawaku", "--location", "Tokyo"])
+            .unwrap()
+            .count,
+        1
+    );
+    for count in ["1", "2", "3"] {
+        assert_eq!(
+            Cli::try_parse_from(["mawaku", "--location", "Tokyo", "--count", count])
+                .unwrap()
+                .count
+                .to_string(),
+            count
+        );
+    }
+    for count in ["0", "4", "-1", "many", "256"] {
+        assert!(Cli::try_parse_from(["mawaku", "--location", "Tokyo", "--count", count]).is_err());
+    }
+}
+
+#[test]
+fn variants_mix_references_and_preserve_constraints() {
+    let description = PlaceDescription {
+        ambiance: "Quiet local home".into(),
+        items: ["cedar", "linen", "ceramics", "paper", "stone", "bamboo"]
+            .map(String::from)
+            .to_vec(),
+        keywords: ["calm", "airy", "cozy"].map(String::from).to_vec(),
+    };
+    let prompts = build_prompt_variants(
+        "Fixed camera rules",
+        Some(&description),
+        Some("autumn"),
+        Some("morning"),
+        3,
+    );
+    assert_eq!(prompts.len(), 3);
+    for prompt in &prompts {
+        assert!(prompt.starts_with("Fixed camera rules"));
+        assert!(prompt.contains("Season: autumn"));
+        assert!(prompt.contains("Time of day: morning"));
+        assert!(prompt.contains("Ambiance: Quiet local home"));
+    }
+    assert!(prompts[0].contains("Items: cedar, paper"));
+    assert!(prompts[1].contains("Items: linen, stone"));
+    assert!(prompts[2].contains("Items: ceramics, bamboo"));
+    assert_eq!(
+        build_prompt_variants("Rules", Some(&description), None, None, 1),
+        vec![build_structured_prompt(
+            "Rules",
+            Some(&description),
+            None,
+            None
+        )]
+    );
+}
+
+#[test]
+fn variants_remain_distinct_without_place_description() {
+    let prompts = build_prompt_variants("Rules", None, None, None, 3);
+    assert_ne!(prompts[0], prompts[1]);
+    assert_ne!(prompts[1], prompts[2]);
+    assert_ne!(prompts[0], prompts[2]);
 }

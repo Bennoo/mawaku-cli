@@ -156,39 +156,41 @@ pub fn format_context_line(label: &str, value: Option<&str>) -> String {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn component_token_slugifies_input() {
-        let token = component_token("Hakone, Japan");
-        assert_eq!(token.as_deref(), Some("hakone-jap"));
+/// Distribute unique, nonblank references across variants before reusing any.
+/// Sparse lists are shared so every variant retains available local context.
+pub fn distribute_prompt_details(
+    details: &[String],
+    variant: usize,
+    count: usize,
+    limit: usize,
+) -> Vec<String> {
+    let mut unique = Vec::new();
+    for detail in details {
+        let detail = detail.trim();
+        if !detail.is_empty()
+            && !unique
+                .iter()
+                .any(|existing: &String| existing.eq_ignore_ascii_case(detail))
+        {
+            unique.push(detail.to_string());
+        }
     }
-
-    #[test]
-    fn slugify_preserves_alphanumeric_segments() {
-        let slug = slugify("Hakone, Japan");
-        assert_eq!(slug.as_deref(), Some("hakone-japan"));
+    if unique.is_empty() || count == 0 {
+        return Vec::new();
     }
-
-    #[test]
-    fn builder_discards_empty_components() {
-        let mut builder = ImageNameBuilder::new(DEFAULT_FILE_NAME_PREFIX);
-        builder.push_component(Some("Hakone"));
-        builder.push_component(Some("   "));
-        builder.push_component(None);
-        let context = builder.build();
-        assert_eq!(context.base, "mawaku-hakone");
-    }
-
-    #[test]
-    fn file_stem_includes_random_suffix() {
-        let context = ImageNameBuilder::new(DEFAULT_FILE_NAME_PREFIX).build();
-        let stem = context.file_stem(1);
-        let (_, suffix) = stem
-            .rsplit_once('-')
-            .expect("file stem contains random suffix");
-        assert_eq!(suffix.len(), DEFAULT_RANDOM_SUFFIX_LENGTH);
+    let selected: Vec<_> = unique
+        .iter()
+        .skip(variant)
+        .step_by(count)
+        .take(limit)
+        .cloned()
+        .collect();
+    if selected.is_empty() && limit > 0 {
+        vec![unique[variant % unique.len()].clone()]
+    } else {
+        selected
     }
 }
+
+#[cfg(test)]
+mod tests;

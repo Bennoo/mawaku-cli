@@ -11,13 +11,13 @@ use toml::Value;
 pub const DEFAULT_PROMPT: &str = "\
 Create a single 16:9 photographic background for a video call: a real lived-in room seen by a good webcam, temporarily without its occupant. \
 The result must have convincing scale, materials and light, and feel like a beautiful home the viewer would love to step into and spend an afternoon in.\n\n\
-Camera and framing: the webcam is mounted on a monitor at a desk near one side of the room, about 1.25 metres above the floor. \
-It faces past the absent seated caller into the room behind them; the desk and monitor are behind the camera and out of view. \
+Camera and framing: the viewpoint is a level webcam near one side of the room, about 1.25 metres above the floor. \
+The camera looks directly into the room from the caller's position. The desk, monitor and caller's chair remain entirely behind the camera and outside the frame. \
 Keep the camera level, with a natural moderately wide field of view, approximately a 28-35 mm full-frame equivalent lens. \
 Use straight verticals and normal furniture proportions, without fisheye or stretched corners. \
-Keep the central area where a caller's head and shoulders will appear visually quiet; place distinctive furnishings to either side.\n\n\
+Keep the central area reserved for the caller's head, shoulders and torso visually quiet; place distinctive furnishings to either side.\n\n\
 Space and layout: show a generously sized but plausible home living room or study, with the back wall roughly 4-6 metres away. \
-Leave open floor between the camera and the furniture. Use a few furnishings in the middle distance and a farther wall or open doorway to establish depth. \
+The bottom edge of the image shows only unobstructed floor or a flat rug, continuing into the middle distance. Keep all furniture beyond the immediate foreground and outside the central area reserved for the caller. Leave open floor between the camera and the furniture. Use a few furnishings in the middle distance and a farther wall or open doorway to establish depth. \
 Let two walls meet off-centre rather than using a perfectly symmetrical composition. \
 Avoid close-up furniture, an empty echoing hall, or an exaggerated luxury showroom. \
 Make the room welcoming through a comfortable seating area to one side, tactile natural materials and a harmonious palette with a little local colour. \

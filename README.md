@@ -41,6 +41,24 @@ Craft richly lit video-call backdrops from a single prompt. **Mawaku** (間 *ma*
 
    Mawaku reads this variable each time it runs (and warns loudly if it is absent), so you never have to edit the config with raw secrets.
 
+Generate up to three variations in one invocation:
+
+```bash
+cargo run -p mawaku -- --location "Tokyo, Asakusa" --season autumn --time-of-day morning --count 3
+```
+
+`--count` defaults to `1` and accepts only `1`, `2`, or `3`. For multiple images,
+Mawaku reuses one place description, distributes different local details across
+prompts, and combines them with distinct reading, living-room, and study arrangements.
+Location, season, lighting, and webcam framing rules stay consistent. Sparse local
+references may be shared, but each arrangement remains different. Visual differences
+are encouraged rather than guaranteed by the image model.
+
+Each variant makes a separate, sequential image API request (and incurs its own API
+usage). Prompts are printed with numbered headings, and files use `p1`, `p2`, and `p3`.
+A failed variant is reported and the remaining variants are still attempted; there
+are no automatic retries. Without an API key, all requested prompts are printed.
+
 ---
 
 ## Precompiled Linux binaries
@@ -142,7 +160,9 @@ Get inspired by a few curated scenes. Each command runs from the `mawaku-rs/` wo
 ## Configuration
 
 The image prompt uses a level webcam at seated eye height, looking into a spacious,
-lived-in room with furniture several metres away and a quiet centre for the caller.
+lived-in room with furniture several metres away and a quiet centre for the caller's
+head and torso. The foreground and bottom edge show only clear floor or a flat rug;
+the desk, monitor, and caller's chair stay entirely outside the frame behind the camera.
 Comfortable seating, tactile natural materials and a restrained local view make the
 space inviting while retaining believable proportions and everyday character.
 Local references are limited to a few subtle residential details. `--time-of-day`
