@@ -176,6 +176,7 @@ jobs:
 
       - name: Render formula
         run: |
+          mkdir -p tap/Formula
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
           sed \
