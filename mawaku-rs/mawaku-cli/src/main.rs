@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init};
 use mawaku_gemini::{PlaceDescription, craft_prompt, generate_image, generate_place_description};
 use mawaku_image::{SaveImageOptions, save_base64_image};
@@ -25,12 +25,16 @@ const GEMINI_KEY_WARNING_PREFIX: &str =
     author,
     version,
     about = "Generate video-call backgrounds by describing a place.",
+    subcommand_negates_reqs = true,
+    args_conflicts_with_subcommands = true,
     long_about = None
 )]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
     /// Location that should anchor the generated background.
-    #[arg(long, value_name = "LOCATION")]
-    location: String,
+    #[arg(long, value_name = "LOCATION", required = true)]
+    location: Option<String>,
     /// Number of distinct image variants to generate (1-3).
     #[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u8).range(1..=3))]
     count: u8,
@@ -43,6 +47,32 @@ struct Cli {
     /// Optional time of day to tailor the lighting of the scene.
     #[arg(long = "time-of-day", value_name = "TIME")]
     time_of_day: Option<String>,
+}
+
+#[derive(Subcommand, Debug, Clone)]
+enum Command {
+    /// Save your Gemini API key in the config file using hidden input.
+    Setup,
+}
+
+fn setup() -> Result<(), String> {
+    if !io::stdin().is_terminal() {
+        return Err("Run `mawaku setup` in an interactive terminal, or set GEMINI_API_KEY for noninteractive use.".into());
+    }
+    print_notice(
+        "The key will be stored in plain text in your Mawaku config file. Input is hidden.",
+        false,
+    );
+    let key = rpassword::prompt_password("  Gemini API key: ")
+        .map_err(|_| "Could not read the API key from the terminal.".to_string())?;
+    let path = mawaku_config::save_gemini_api_key(&key)
+        .map_err(|error| format!("Could not save API key: {error}"))?;
+    print_notice(&format!("API key saved to {}", path.display()), false);
+    print_notice(
+        "An exported API key environment variable takes precedence. No API request was made.",
+        false,
+    );
+    Ok(())
 }
 
 fn build_structured_prompt(
@@ -123,7 +153,7 @@ fn build_prompt_variants(
 
 fn build_image_name_context(cli: &Cli) -> ImageNameContext {
     let mut builder = ImageNameBuilder::new(DEFAULT_FILE_NAME_PREFIX);
-    builder.push_component(Some(cli.location.as_str()));
+    builder.push_component(cli.location.as_deref());
     builder.push_component(cli.season.as_deref());
     builder.push_component(cli.time_of_day.as_deref());
     builder.build()
@@ -131,6 +161,13 @@ fn build_image_name_context(cli: &Cli) -> ImageNameContext {
 
 fn main() {
     let cli = Cli::parse();
+    if matches!(cli.command, Some(Command::Setup)) {
+        if let Err(error) = setup() {
+            print_notice(&error, true);
+            std::process::exit(1);
+        }
+        return;
+    }
     let image_name_context = build_image_name_context(&cli);
 
     let verbose = cli.verbose;
@@ -254,7 +291,7 @@ fn main() {
     eprintln!();
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 struct RunContext {
     count: u8,
     #[cfg_attr(not(test), allow(dead_code))]
@@ -271,12 +308,14 @@ struct RunContext {
 
 fn run(cli: Cli) -> RunContext {
     let Cli {
+        command: _,
         verbose: _,
         count,
         location,
         season,
         time_of_day,
     } = cli;
+    let location = location.expect("Clap requires a location for generation");
 
     let mut infos = Vec::new();
     let mut warnings = Vec::new();
@@ -360,7 +399,21 @@ fn resolve_gemini_api_key(config: &Config) -> (Option<String>, Option<String>) {
     let env_var = config.gemini_api.api_key_env_var();
     match env::var(env_var) {
         Ok(value) if !value.trim().is_empty() => (Some(value), None),
-        _ => (None, Some(format!("{GEMINI_KEY_WARNING_PREFIX}{env_var}."))),
+        _ => match config
+            .gemini_api
+            .api_key
+            .as_deref()
+            .map(str::trim)
+            .filter(|key| !key.is_empty())
+        {
+            Some(key) => (Some(key.to_string()), None),
+            None => (
+                None,
+                Some(format!(
+                    "{GEMINI_KEY_WARNING_PREFIX}{env_var}, or run `mawaku setup`."
+                )),
+            ),
+        },
     }
 }
 

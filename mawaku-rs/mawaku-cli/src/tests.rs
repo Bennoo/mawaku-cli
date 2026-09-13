@@ -94,9 +94,10 @@ fn remove_env(key: &str) {
 fn run_warns_when_gemini_key_missing() {
     with_isolated_home(|home| {
         let context = run(Cli {
+            command: None,
             verbose: false,
             count: 1,
-            location: "Hakone, Japan".to_string(),
+            location: Some("Hakone, Japan".to_string()),
             season: None,
             time_of_day: None,
         });
@@ -144,9 +145,10 @@ fn run_uses_custom_env_var_from_config() {
         let secret = OsString::from("secret-key");
         set_env(env_var, secret.as_os_str());
         let context = run(Cli {
+            command: None,
             verbose: false,
             count: 1,
-            location: "Hakone, Japan".to_string(),
+            location: Some("Hakone, Japan".to_string()),
             season: None,
             time_of_day: None,
         });
@@ -176,9 +178,10 @@ fn run_uses_custom_env_var_from_config() {
         fs::write(&config_path, serialized).expect("write updated config");
 
         let second_run = run(Cli {
+            command: None,
             verbose: false,
             count: 1,
-            location: "Hakone, Japan".to_string(),
+            location: Some("Hakone, Japan".to_string()),
             season: None,
             time_of_day: None,
         });
@@ -205,9 +208,10 @@ fn run_uses_custom_env_var_from_config() {
 #[test]
 fn image_name_context_builds_unique_file_stem() {
     let cli = Cli {
+        command: None,
         verbose: false,
         count: 1,
-        location: "Hakone, Japan".to_string(),
+        location: Some("Hakone, Japan".to_string()),
         season: Some("Spring".to_string()),
         time_of_day: Some("Dusk".to_string()),
     };
@@ -231,9 +235,10 @@ fn image_name_context_builds_unique_file_stem() {
 #[test]
 fn image_name_context_truncates_long_components() {
     let cli = Cli {
+        command: None,
         verbose: false,
         count: 1,
-        location: "Extremely Long Location Name That Keeps Going".to_string(),
+        location: Some("Extremely Long Location Name That Keeps Going".to_string()),
         season: Some("Supercalifragilisticexpialidocious".to_string()),
         time_of_day: Some("Midnight Sun Time".to_string()),
     };
@@ -249,7 +254,7 @@ fn image_name_context_truncates_long_components() {
     assert_eq!(base, "mawaku-extremely-supercalif-midnight-s");
 
     let location_component =
-        component_token(&cli.location).expect("location component slug exists");
+        component_token(cli.location.as_deref().unwrap()).expect("location component slug exists");
     assert_eq!(location_component, "extremely");
 
     let season_component =
@@ -365,4 +370,41 @@ fn variants_remain_distinct_without_place_description() {
     assert_ne!(prompts[0], prompts[1]);
     assert_ne!(prompts[1], prompts[2]);
     assert_ne!(prompts[0], prompts[2]);
+}
+
+#[test]
+fn setup_parses_without_location_and_rejects_generation_flags() {
+    assert!(matches!(
+        Cli::try_parse_from(["mawaku", "setup"]).unwrap().command,
+        Some(Command::Setup)
+    ));
+    assert!(Cli::try_parse_from(["mawaku"]).is_err());
+    assert!(Cli::try_parse_from(["mawaku", "--location", "Tokyo", "setup"]).is_err());
+    assert!(Cli::try_parse_from(["mawaku", "setup", "--api-key", "test-key"]).is_err());
+}
+
+#[test]
+fn saved_key_is_used_unless_environment_overrides_it() {
+    with_isolated_home(|_| {
+        let mut config = Config::default();
+        config.gemini_api.api_key = Some("saved-test-key".into());
+        assert_eq!(
+            resolve_gemini_api_key(&config),
+            (Some("saved-test-key".into()), None)
+        );
+        set_env(DEFAULT_GEMINI_API_KEY_ENV_VAR, OsStr::new("env-test-key"));
+        assert_eq!(
+            resolve_gemini_api_key(&config),
+            (Some("env-test-key".into()), None)
+        );
+        set_env(DEFAULT_GEMINI_API_KEY_ENV_VAR, OsStr::new("  "));
+        assert_eq!(
+            resolve_gemini_api_key(&config),
+            (Some("saved-test-key".into()), None)
+        );
+        config.gemini_api.api_key = Some("  ".into());
+        let (key, warning) = resolve_gemini_api_key(&config);
+        assert!(key.is_none());
+        assert!(warning.unwrap().contains("mawaku setup"));
+    });
 }

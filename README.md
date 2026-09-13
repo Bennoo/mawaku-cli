@@ -33,13 +33,14 @@ Craft richly lit video-call backdrops from a single prompt. **Mawaku** (間 *ma*
      --time-of-day dusk
    ```
 
-3. **Export your Gemini API key once**
+3. **Save your Gemini API key**
 
    ```bash
-   export GEMINI_API_KEY="your-secret"
+   cargo run -p mawaku -- setup
    ```
 
-   Mawaku reads this variable each time it runs (and warns loudly if it is absent), so you never have to edit the config with raw secrets.
+   Paste the key at the hidden prompt. Mawaku saves it in your user config for future runs.
+   With an installed binary, use `mawaku setup`.
 
 Generate up to three variations in one invocation:
 
@@ -227,13 +228,25 @@ Mawaku writes persistent settings to `~/.mawaku/config.toml` the first time you 
 
 | Key / Section       | Purpose                                                                                      |
 | ------------------- | -------------------------------------------------------------------------------------------- |
-| `prompt`            | Baseline template the CLI enriches with your inputs.                                         |
-| `[gemini_api]`      | Tracks the environment variable that stores the Gemini API key.                               |
+| `[gemini_api]`      | Stores the optional API key and the environment variable override name.                               |
 | `image_output_dir`  | Directory (inside or outside Docker) for rendered assets.                                    |
 
 > **Gemini credentials**
 >
-> Mawaku never writes the Gemini API key to disk. Instead, `[gemini_api]` keeps a single entry: `api_key_env_var`. It defaults to `GEMINI_API_KEY`, but you can edit the config file to point to any environment variable name you prefer (for example, `GEMINI_KEY`). Make sure that variable is exported before invoking the CLI.
+> Run `mawaku setup` to save or replace `[gemini_api].api_key` using hidden terminal input.
+> The key is stored in plain text in `~/.mawaku/config.toml` on Linux and macOS, or
+> `%USERPROFILE%\.mawaku\config.toml` on Windows. On Unix, the file is restricted to
+> its owner (`0600`); on Windows, it inherits the user directory's access permissions.
+> Setup uses the same user config regardless of how the binary was installed,
+> including source builds and macOS Homebrew installations. It does not validate the
+> key with Gemini or generate an image. An empty entry leaves the saved key unchanged.
+>
+> A nonempty environment variable takes precedence over the saved key. Its name is
+> configured by `[gemini_api].api_key_env_var` and defaults to `GEMINI_API_KEY`.
+> For containers or noninteractive runs, use `export GEMINI_API_KEY="your-key"`
+> (Bash/Zsh) or `$env:GEMINI_API_KEY="your-key"` (PowerShell).
+> To remove the saved key, delete the `api_key` entry from the config file.
+
 
 > **Image output directory**
 >

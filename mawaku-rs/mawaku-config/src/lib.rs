@@ -57,10 +57,37 @@ pub struct Config {
     pub image_output_dir: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GeminiApiConfig {
     pub api_key_env_var: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_key: Option<String>,
+}
+
+impl std::fmt::Debug for GeminiApiConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GeminiApiConfig")
+            .field("api_key_env_var", &self.api_key_env_var)
+            .field("api_key", &self.api_key.as_ref().map(|_| "[redacted]"))
+            .finish()
+    }
+}
+
+/// Save a key without changing other configuration settings.
+pub fn save_gemini_api_key(key: &str) -> Result<PathBuf, ConfigError> {
+    let key = key.trim();
+    if key.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "API key cannot be empty",
+        )
+        .into());
+    }
+    let mut outcome = load_or_init()?;
+    outcome.config.gemini_api.api_key = Some(key.to_string());
+    save(&outcome.config, &outcome.path)?;
+    Ok(outcome.path)
 }
 
 impl GeminiApiConfig {
@@ -86,6 +113,7 @@ impl Default for GeminiApiConfig {
     fn default() -> Self {
         Self {
             api_key_env_var: DEFAULT_GEMINI_API_KEY_ENV_VAR.to_string(),
+            api_key: None,
         }
     }
 }
@@ -187,7 +215,21 @@ pub fn load_or_init() -> Result<LoadOutcome, ConfigError> {
 pub fn save(config: &Config, path: &Path) -> Result<(), ConfigError> {
     ensure_parent_exists(path)?;
     let serialized = toml::to_string_pretty(config)?;
-    fs::write(path, serialized)?;
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(path)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        file.set_permissions(fs::Permissions::from_mode(0o600))?;
+    }
+    file.set_len(0)?;
+    std::io::Write::write_all(&mut file, serialized.as_bytes())?;
     Ok(())
 }
 

@@ -70,3 +70,129 @@ jobs:
           files: mawaku-rs/${{ env.ASSET_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  macos-arm64:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mawaku-rs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Build Mawaku CLI (macos/arm64)
+        run: cargo build --release --target aarch64-apple-darwin -p mawaku
+
+      - name: Package binary
+        run: |
+          ARTIFACT="mawaku-${{ github.ref_name }}-macos-arm64.tar.gz"
+          tar -czf "$ARTIFACT" -C target/aarch64-apple-darwin/release mawaku
+          echo "ASSET_NAME=$ARTIFACT" >> "$GITHUB_ENV"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mawaku-rs/${{ env.ASSET_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  macos-x86_64:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mawaku-rs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+
+      - name: Build Mawaku CLI (macos/x86_64)
+        run: cargo build --release --target x86_64-apple-darwin -p mawaku
+
+      - name: Package binary
+        run: |
+          ARTIFACT="mawaku-${{ github.ref_name }}-macos-x86_64.tar.gz"
+          tar -czf "$ARTIFACT" -C target/x86_64-apple-darwin/release mawaku
+          echo "ASSET_NAME=$ARTIFACT" >> "$GITHUB_ENV"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: mawaku-rs/${{ env.ASSET_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  homebrew-tap:
+    needs: [linux-x86_64, linux-arm64, macos-arm64, macos-x86_64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            homebrew
+
+      - name: Download release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "mawaku-${{ github.ref_name }}-*.tar.gz" \
+            --dir dist
+
+      - name: Compute checksums
+        id: sums
+        run: |
+          for f in dist/*.tar.gz; do
+            sha=$(sha256sum "$f" | cut -d' ' -f1)
+            case "$f" in
+              *linux-x86_64*) echo "linux_x86_64=$sha" >> "$GITHUB_OUTPUT" ;;
+              *linux-arm64*) echo "linux_arm64=$sha" >> "$GITHUB_OUTPUT" ;;
+              *macos-x86_64*) echo "macos_x86_64=$sha" >> "$GITHUB_OUTPUT" ;;
+              *macos-arm64*) echo "macos_arm64=$sha" >> "$GITHUB_OUTPUT" ;;
+            esac
+          done
+
+      - name: Checkout tap repo
+        uses: actions/checkout@v4
+        with:
+          repository: Bennoo/homebrew-mawaku
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Render formula
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          sed \
+            -e "s/__VERSION__/${VERSION}/g" \
+            -e "s/__REF__/${{ github.ref_name }}/g" \
+            -e "s/__SHA_LINUX_X86_64__/${{ steps.sums.outputs.linux_x86_64 }}/g" \
+            -e "s/__SHA_LINUX_ARM64__/${{ steps.sums.outputs.linux_arm64 }}/g" \
+            -e "s/__SHA_MACOS_X86_64__/${{ steps.sums.outputs.macos_x86_64 }}/g" \
+            -e "s/__SHA_MACOS_ARM64__/${{ steps.sums.outputs.macos_arm64 }}/g" \
+            homebrew/mawaku.rb.tmpl > tap/Formula/mawaku.rb
+
+      - name: Commit and push formula
+        working-directory: tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/mawaku.rb
+          git diff --cached --quiet && exit 0
+          git commit -m "mawaku ${{ github.ref_name }}"
+          git push

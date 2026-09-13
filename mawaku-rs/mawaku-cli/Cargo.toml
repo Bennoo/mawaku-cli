@@ -9,6 +9,7 @@ keywords = ["cli", "backgrounds", "video"]
 categories = ["command-line-utilities"]
 
 [dependencies]
+rpassword = "7.5"
 clap = { workspace = true }
 mawaku-config = { path = "../mawaku-config", version = "0.1.0" }
 mawaku-gemini = { path = "../mawaku-gemini", version = "0.1.0" }

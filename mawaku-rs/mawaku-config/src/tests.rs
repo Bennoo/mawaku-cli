@@ -183,3 +183,42 @@ fn set_env(key: &str, value: &OsStr) {
 fn remove_env(key: &str) {
     unsafe { std::env::remove_var(key) };
 }
+
+#[test]
+fn setup_persists_and_replaces_key_without_changing_settings() {
+    with_isolated_home(|_| {
+        let mut outcome = load_or_init().unwrap();
+        outcome.config.image_output_dir = "custom-output".into();
+        outcome.config.gemini_api.api_key_env_var = "CUSTOM_KEY".into();
+        save(&outcome.config, &outcome.path).unwrap();
+        let path = save_gemini_api_key("  first-test-key  ").unwrap();
+        let loaded = load_or_init().unwrap();
+        assert_eq!(
+            loaded.config.gemini_api.api_key.as_deref(),
+            Some("first-test-key")
+        );
+        assert_eq!(loaded.config.image_output_dir, "custom-output");
+        assert_eq!(loaded.config.gemini_api.api_key_env_var, "CUSTOM_KEY");
+        assert!(!format!("{:?}", loaded.config).contains("first-test-key"));
+        assert!(save_gemini_api_key("  ").is_err());
+        assert_eq!(
+            load_or_init().unwrap().config.gemini_api.api_key.as_deref(),
+            Some("first-test-key")
+        );
+        save_gemini_api_key("replacement-test-key").unwrap();
+        let contents = fs::read_to_string(&path).unwrap();
+        assert!(!contents.contains("first-test-key"));
+        assert_eq!(
+            load_or_init().unwrap().config.gemini_api.api_key.as_deref(),
+            Some("replacement-test-key")
+        );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                fs::metadata(path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+    });
+}
