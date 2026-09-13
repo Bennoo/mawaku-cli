@@ -103,7 +103,7 @@ fn build_prompt_variants(
         )];
     }
     let arrangements = [
-        "Arrange a reading chair beside a side window, with a low bookcase on the farther wall. Use a casually placed book as the small sign of daily life.",
+        "Arrange a reading chair beside a broad exterior window, with a low bookcase on the farther wall. Use a casually placed book as the small sign of daily life.",
         "Arrange a comfortable sofa along a side wall, with an open doorway establishing depth. Use a loosely folded throw as the small sign of daily life.",
         "Arrange a quiet study corner in the middle distance to one side, with a wooden chair and a small plant. Use a ceramic cup as the small sign of daily life.",
     ];
@@ -116,7 +116,7 @@ fn build_prompt_variants(
         let mut prompt = build_structured_prompt(instructions, selected.as_ref(), season, time_of_day);
         prompt.push_str("\n\nScene arrangement:\n");
         prompt.push_str(arrangements[index]);
-        prompt.push_str(" Keep these furnishings away from the camera and the caller's central area. Adapt local references to this arrangement only where compatible; preserve the camera geometry and requested timing.");
+        prompt.push_str(" Keep these furnishings away from the camera and the caller's central area, and leave the broad exterior opening unobstructed. Adapt local references to this arrangement only where compatible; preserve the camera geometry and requested timing.");
         prompt
     }).collect()
 }

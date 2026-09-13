@@ -28,7 +28,7 @@ Light and photographic character: follow the requested time of day consistently 
 Use plausible soft window light from the side and practical room lamps where appropriate. \
 At dusk, show subdued cool exterior light and restrained warm indoor lamps; at night, rely on indoor lighting and a dark exterior. \
 Keep the room readable with natural exposure, gentle shadows, neutral colours and restrained contrast. \
-A side window may offer an enticing but geographically plausible glimpse of greenery, a courtyard or the local landscape; keep the room the main subject and avoid a bright backlit rectangle. \
+Exterior opening and view: include a broad picture window, wide glazed doors or a generous opening onto a terrace, appropriate to the setting and weather. Give this opening roughly one third of the image width, extending into the middle distance on one side of the frame. Show a substantial, clearly readable view of the local landscape, courtyard or skyline through it. Keep curtains, plants and furniture from obscuring most of the opening. Retain enough interior wall and floor to establish a comfortable room, with the caller's central area visually quiet. Use physically appropriate glazing or enclosure for cold weather and space settings. Balance indoor and outdoor exposure so the exterior retains detail and the room remains readable; follow the requested time of day. \
 Render subtle fabric texture, wood grain, matte paint, slight wear and small everyday irregularities. \
 Keep the background naturally in focus, without portrait blur, artificial sharpening, HDR halos, dramatic sunbeams or cinematic colour grading.\n\n\
 Finish: a tidy but inhabited room with a few casually placed objects, not a staged catalogue photograph or a CGI interior. \

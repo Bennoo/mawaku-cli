@@ -13,3 +13,4 @@
 !docs/examples/*.png
 
 .mawaku-config/config.toml
+out/

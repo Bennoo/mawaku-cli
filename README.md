@@ -130,8 +130,9 @@ mawaku --help
 
 ## Spotlight Prompts
 
-These examples use the current CLI and background framing. Run each command from
-the `mawaku-rs/` workspace root.
+These examples use the updated framing: broad exterior openings with more room
+for the view, while keeping the foreground clear for the caller. Run each command
+from the `mawaku-rs/` workspace root.
 
 ### Italian Coastal Morning
 
@@ -209,8 +210,11 @@ The image prompt uses a level webcam at seated eye height, looking into a spacio
 lived-in room with furniture several metres away and a quiet centre for the caller's
 head and torso. The foreground and bottom edge show only clear floor or a flat rug;
 the desk, monitor, and caller's chair stay entirely outside the frame behind the camera.
-Comfortable seating, tactile natural materials and a restrained local view make the
-space inviting while retaining believable proportions and everyday character.
+Comfortable seating and tactile natural materials make the space inviting. A broad
+window, glazed doors or a terrace opening occupies roughly one third of the image
+width to one side, giving the exterior a substantial, unobstructed place in the
+composition. Balanced exposure preserves outdoor detail and a readable interior;
+glazing or enclosure stays appropriate to the weather and setting.
 Local references are limited to a few subtle residential details. `--time-of-day`
 controls indoor lighting and the exterior view; omitted timing defaults to soft,
 overcast daytime light. The prompt avoids dramatic HDR lighting and staged showroom styling.
