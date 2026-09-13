@@ -12,19 +12,20 @@ run *args:
     cd "{{justfile_directory()}}/mawaku-rs"
     cargo run -p mawaku -- "$@"
 
-# Bump mawaku's version, commit Cargo.toml, and tag. Does not push. e.g. `just bump v1.2.0`
+# Bump mawaku's version, commit Cargo.toml, and tag. Does not push. Version must start with 'v', e.g. `just bump v1.2.0`
 bump version:
     #!/usr/bin/env bash
     set -euo pipefail
     cd "{{justfile_directory()}}"
 
     tag="{{version}}"
-    ver="${tag#v}"
 
-    if [[ ! "$ver" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-      echo "error: version must be vX.Y.Z or X.Y.Z (got '{{version}}')" >&2
+    if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      echo "error: version must start with 'v', e.g. v0.6.0 (got '{{version}}')" >&2
       exit 1
     fi
+
+    ver="${tag#v}"
 
     current=$(grep -m1 -E '^version = "[0-9]+\.[0-9]+\.[0-9]+"' {{CLI_TOML}} | sed -E 's/^version = "(.*)"/\1/')
     IFS='.' read -r cur_major cur_minor cur_patch <<< "$current"
