@@ -143,6 +143,8 @@ Get inspired by a few curated scenes. Each command runs from the `mawaku-rs/` wo
 
 The image prompt uses a level webcam at seated eye height, looking into a spacious,
 lived-in room with furniture several metres away and a quiet centre for the caller.
+Comfortable seating, tactile natural materials and a restrained local view make the
+space inviting while retaining believable proportions and everyday character.
 Local references are limited to a few subtle residential details. `--time-of-day`
 controls indoor lighting and the exterior view; omitted timing defaults to soft,
 overcast daytime light. The prompt avoids dramatic HDR lighting and staged showroom styling.

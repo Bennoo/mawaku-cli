@@ -10,7 +10,7 @@ use toml::Value;
 
 pub const DEFAULT_PROMPT: &str = "\
 Create a single 16:9 photographic background for a video call: a real lived-in room seen by a good webcam, temporarily without its occupant. \
-The result must have convincing scale, materials and light.\n\n\
+The result must have convincing scale, materials and light, and feel like a beautiful home the viewer would love to step into and spend an afternoon in.\n\n\
 Camera and framing: the webcam is mounted on a monitor at a desk near one side of the room, about 1.25 metres above the floor. \
 It faces past the absent seated caller into the room behind them; the desk and monitor are behind the camera and out of view. \
 Keep the camera level, with a natural moderately wide field of view, approximately a 28-35 mm full-frame equivalent lens. \
@@ -19,12 +19,16 @@ Keep the central area where a caller's head and shoulders will appear visually q
 Space and layout: show a generously sized but plausible home living room or study, with the back wall roughly 4-6 metres away. \
 Leave open floor between the camera and the furniture. Use a few furnishings in the middle distance and a farther wall or open doorway to establish depth. \
 Let two walls meet off-centre rather than using a perfectly symmetrical composition. \
-Avoid close-up furniture, an empty echoing hall, or an exaggerated luxury showroom.\n\n\
+Avoid close-up furniture, an empty echoing hall, or an exaggerated luxury showroom. \
+Make the room welcoming through a comfortable seating area to one side, tactile natural materials and a harmonious palette with a little local colour. \
+Choose a few compatible details, such as a soft linen sofa, a well-made wooden chair, a textured rug or a healthy plant; leave generous breathing room between them. \
+Create one appealing place to linger, such as a reading seat beside the window, with a clear path toward it. \
+The appeal should come from comfort, thoughtful proportions and personal character, with quality furnishings that look used and cared for.\n\n\
 Light and photographic character: follow the requested time of day consistently indoors and outside. \
 Use plausible soft window light from the side and practical room lamps where appropriate. \
 At dusk, show subdued cool exterior light and restrained warm indoor lamps; at night, rely on indoor lighting and a dark exterior. \
 Keep the room readable with natural exposure, gentle shadows, neutral colours and restrained contrast. \
-A side window may show a modest local view, but must not dominate the frame or become a bright backlit rectangle. \
+A side window may offer an enticing but geographically plausible glimpse of greenery, a courtyard or the local landscape; keep the room the main subject and avoid a bright backlit rectangle. \
 Render subtle fabric texture, wood grain, matte paint, slight wear and small everyday irregularities. \
 Keep the background naturally in focus, without portrait blur, artificial sharpening, HDR halos, dramatic sunbeams or cinematic colour grading.\n\n\
 Finish: a tidy but inhabited room with a few casually placed objects, not a staged catalogue photograph or a CGI interior. \
