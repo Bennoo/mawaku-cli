@@ -1,19 +1,16 @@
 use clap::Parser;
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init};
-use mawaku_gemini::{
-    GeminiError, ImageGenerationResponse, PlaceDescription, craft_prompt, generate_image,
-    generate_place_description,
-};
+use mawaku_gemini::{PlaceDescription, craft_prompt, generate_image, generate_place_description};
 use mawaku_image::{SaveImageOptions, save_base64_image};
+use mawaku_utils::terminal::{ProgressStep, print_header, print_notice};
 use mawaku_utils::{
     DEFAULT_FILE_NAME_PREFIX, ImageNameBuilder, ImageNameContext, distribute_prompt_details,
     format_context_line, list_or_unspecified, trimmed_or_none,
 };
 use std::env;
-use std::io::{self, Write};
+use std::io::{self, IsTerminal};
 use std::path::PathBuf;
-use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 const GEMINI_KEY_WARNING_PREFIX: &str =
     "Warning: Gemini API key environment variable is missing. Export it before running Mawaku: ";
@@ -37,54 +34,15 @@ struct Cli {
     /// Number of distinct image variants to generate (1-3).
     #[arg(long, default_value_t = 1, value_parser = clap::value_parser!(u8).range(1..=3))]
     count: u8,
+    /// Show full prompts and local reference details.
+    #[arg(short, long)]
+    verbose: bool,
     /// Optional season that informs the ambience of the scene.
     #[arg(long, value_name = "SEASON")]
     season: Option<String>,
     /// Optional time of day to tailor the lighting of the scene.
     #[arg(long = "time-of-day", value_name = "TIME")]
     time_of_day: Option<String>,
-}
-
-fn generate_image_with_progress(
-    api_key: &str,
-    prompt: &str,
-) -> Option<Result<ImageGenerationResponse, GeminiError>> {
-    let api_key = api_key.to_string();
-    let prompt = prompt.to_string();
-
-    let handle = thread::Builder::new()
-        .name("gemini-image-request".into())
-        .spawn(move || generate_image(&api_key, &prompt))
-        .expect("spawn gemini image request");
-
-    const SPINNER_FRAMES: &[&str] = &["|", "/", "-", "\\"];
-    let mut frame_index = 0;
-    let interval = Duration::from_millis(200);
-    let start = Instant::now();
-
-    eprint!("Generating image ");
-    let _ = io::stderr().flush();
-
-    while !handle.is_finished() {
-        eprint!("\rGenerating image {}", SPINNER_FRAMES[frame_index]);
-        let _ = io::stderr().flush();
-        frame_index = (frame_index + 1) % SPINNER_FRAMES.len();
-        thread::sleep(interval);
-    }
-
-    match handle.join() {
-        Ok(result) => {
-            eprintln!(
-                "\rGenerating image ... finished in {:.1}s",
-                start.elapsed().as_secs_f32()
-            );
-            Some(result)
-        }
-        Err(_) => {
-            eprintln!("\rGenerating image ... failed: worker panicked");
-            None
-        }
-    }
 }
 
 fn build_structured_prompt(
@@ -175,29 +133,45 @@ fn main() {
     let cli = Cli::parse();
     let image_name_context = build_image_name_context(&cli);
 
+    let verbose = cli.verbose;
     let context = run(cli);
-
+    let started = Instant::now();
+    print_header(
+        &context.location,
+        context.season.as_deref(),
+        context.time_of_day.as_deref(),
+        context.count,
+    );
     for message in &context.infos {
-        eprintln!("{message}");
+        print_notice(message, false);
     }
-
     for warning in &context.warnings {
-        eprintln!("{warning}");
+        print_notice(warning, true);
     }
 
+    let api_key = context
+        .gemini_api_key
+        .as_deref()
+        .filter(|_| context.config_ready);
     let general_instructions = craft_prompt(DEFAULT_PROMPT, &context.location, None, None);
     let mut description = None;
-    if context.config_ready
-        && let Some(api_key) = context.gemini_api_key.as_deref()
-    {
-        let season = context.season.as_deref().unwrap_or("any season");
-        match generate_place_description(&context.location, season, api_key) {
+    if let Some(api_key) = api_key {
+        let progress = ProgressStep::new("Preparing local details");
+        match generate_place_description(
+            &context.location,
+            context.season.as_deref().unwrap_or("any season"),
+            api_key,
+        ) {
             Ok(details) => {
-                eprintln!("Gemini place description: {}", details);
+                progress.finish(true, "ready");
+                if verbose {
+                    print_notice(&format!("Local references: {details}"), false);
+                }
                 description = Some(details);
             }
             Err(error) => {
-                eprintln!("Warning: failed to generate place description via Gemini ({error}).");
+                progress.finish(false, "using default scene details");
+                print_notice(&error.to_string(), true);
             }
         }
     }
@@ -208,57 +182,76 @@ fn main() {
         context.time_of_day.as_deref(),
         context.count,
     );
-    for (variant_index, prompt) in prompts.iter().enumerate() {
-        if context.count > 1 {
-            println!(
-                "=== Image variant {}/{} ===",
-                variant_index + 1,
-                context.count
-            );
+    let mut saved = Vec::new();
+    for (index, prompt) in prompts.iter().enumerate() {
+        // Preserve prompt output for pipes and prompt-only use, while keeping the terminal calm.
+        if verbose || !io::stdout().is_terminal() || api_key.is_none() {
+            if context.count > 1 {
+                println!("=== Image variant {}/{} ===", index + 1, context.count);
+            }
+            println!("{prompt}");
         }
-        println!("{prompt}");
-        if context.config_ready
-            && let Some(api_key) = context.gemini_api_key.as_deref()
-        {
-            eprintln!("Image variant {}/{}", variant_index + 1, context.count);
-            match generate_image_with_progress(api_key, &prompt) {
-                Some(Ok(response)) => {
-                    eprintln!("Gemini generated {} image(s).", response.images.len());
-
-                    for (index, generated_image) in response.images.iter().take(1).enumerate() {
-                        let display_index = variant_index + index + 1;
-                        let file_stem = image_name_context.file_stem(display_index);
-                        let output_dir = context.image_output_dir.as_deref();
-                        let options = SaveImageOptions {
-                            file_stem: Some(file_stem.as_str()),
-                            mime_type: generated_image.mime_type.as_deref(),
-                            output_dir,
-                        };
-
-                        match save_base64_image(&generated_image.data, options) {
-                            Ok(path) => {
-                                eprintln!(
-                                    "Saved prediction #{display_index} to {}",
-                                    path.display()
-                                );
-                            }
-                            Err(error) => {
-                                eprintln!(
-                                    "Warning: failed to save prediction #{display_index} ({error})."
-                                );
-                            }
-                        }
+        let Some(api_key) = api_key else {
+            continue;
+        };
+        let label = if context.count == 1 {
+            "Background"
+        } else {
+            ["Reading corner", "Living room", "Study corner"][index]
+        };
+        let progress = ProgressStep::new(format!("{}/{}  {label}", index + 1, context.count));
+        match generate_image(api_key, prompt) {
+            Ok(response) => {
+                let Some(image) = response.images.first() else {
+                    progress.finish(false, "no image returned");
+                    continue;
+                };
+                let stem = image_name_context.file_stem(index + 1);
+                match save_base64_image(
+                    &image.data,
+                    SaveImageOptions {
+                        file_stem: Some(&stem),
+                        mime_type: image.mime_type.as_deref(),
+                        output_dir: context.image_output_dir.as_deref(),
+                    },
+                ) {
+                    Ok(path) => {
+                        progress.finish(true, "saved");
+                        saved.push(path);
+                    }
+                    Err(error) => {
+                        progress.finish(false, "could not save image");
+                        print_notice(&error.to_string(), true);
                     }
                 }
-                Some(Err(error)) => {
-                    eprintln!("Warning: failed to generate image via Gemini ({error}).");
-                }
-                None => {
-                    eprintln!("Warning: image generation request ended unexpectedly.");
-                }
+            }
+            Err(error) => {
+                progress.finish(false, "generation failed");
+                print_notice(&error.to_string(), true);
             }
         }
     }
+    eprintln!();
+    if api_key.is_some() {
+        print_notice(
+            &format!(
+                "Saved {}/{} images in {:.1}s",
+                saved.len(),
+                context.count,
+                started.elapsed().as_secs_f32()
+            ),
+            saved.len() != usize::from(context.count),
+        );
+        for path in saved {
+            print_notice(&path.display().to_string(), false);
+        }
+    } else {
+        print_notice(
+            &format!("Prepared {} prompt(s) · no images generated", prompts.len()),
+            false,
+        );
+    }
+    eprintln!();
 }
 
 #[derive(Debug, Default)]
@@ -278,6 +271,7 @@ struct RunContext {
 
 fn run(cli: Cli) -> RunContext {
     let Cli {
+        verbose: _,
         count,
         location,
         season,

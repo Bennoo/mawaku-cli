@@ -1,3 +1,5 @@
+pub mod terminal;
+
 use rand::{seq::SliceRandom, thread_rng};
 
 pub const DEFAULT_FILE_NAME_PREFIX: &str = "mawaku";

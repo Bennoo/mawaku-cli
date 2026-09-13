@@ -94,6 +94,7 @@ fn remove_env(key: &str) {
 fn run_warns_when_gemini_key_missing() {
     with_isolated_home(|home| {
         let context = run(Cli {
+            verbose: false,
             count: 1,
             location: "Hakone, Japan".to_string(),
             season: None,
@@ -143,6 +144,7 @@ fn run_uses_custom_env_var_from_config() {
         let secret = OsString::from("secret-key");
         set_env(env_var, secret.as_os_str());
         let context = run(Cli {
+            verbose: false,
             count: 1,
             location: "Hakone, Japan".to_string(),
             season: None,
@@ -174,6 +176,7 @@ fn run_uses_custom_env_var_from_config() {
         fs::write(&config_path, serialized).expect("write updated config");
 
         let second_run = run(Cli {
+            verbose: false,
             count: 1,
             location: "Hakone, Japan".to_string(),
             season: None,
@@ -202,6 +205,7 @@ fn run_uses_custom_env_var_from_config() {
 #[test]
 fn image_name_context_builds_unique_file_stem() {
     let cli = Cli {
+        verbose: false,
         count: 1,
         location: "Hakone, Japan".to_string(),
         season: Some("Spring".to_string()),
@@ -227,6 +231,7 @@ fn image_name_context_builds_unique_file_stem() {
 #[test]
 fn image_name_context_truncates_long_components() {
     let cli = Cli {
+        verbose: false,
         count: 1,
         location: "Extremely Long Location Name That Keeps Going".to_string(),
         season: Some("Supercalifragilisticexpialidocious".to_string()),

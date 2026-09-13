@@ -55,9 +55,38 @@ references may be shared, but each arrangement remains different. Visual differe
 are encouraged rather than guaranteed by the image model.
 
 Each variant makes a separate, sequential image API request (and incurs its own API
-usage). Prompts are printed with numbered headings, and files use `p1`, `p2`, and `p3`.
+usage). Files use `p1`, `p2`, and `p3`.
 A failed variant is reported and the remaining variants are still attempted; there
 are no automatic retries. Without an API key, all requested prompts are printed.
+
+### Terminal output
+
+Mawaku shows a compact scene header, animated spinners with elapsed time while
+preparing local details and generating each image, and a final saved-file summary.
+Completed variants stay visible; failed variants are marked and remaining work continues.
+For example (illustrative timings):
+
+```text
+  Mawaku
+  Tokyo, Asakusa · autumn · morning
+  3 image variant(s)
+
+  ✓ Preparing local details — ready (2.1s)
+  ✓ 1/3  Reading corner — saved (38.0s)
+  ⠋ 2/3  Living room  00:12
+```
+
+Use `-v` / `--verbose` to show full prompts and local reference details during
+image generation. Prompts are always printed when no generation is possible or
+stdout is redirected, so `> prompts.txt` keeps working. Status output goes to stderr.
+Redirected stderr uses plain progress lines without animation. Set `NO_COLOR=1`
+to disable colors; `TERM=dumb` also disables animation.
+
+Preview the progress UI, including a simulated failure, without API calls:
+
+```bash
+cargo run -p mawaku-utils --example progress
+```
 
 ---
 

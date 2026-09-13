@@ -7,3 +7,5 @@ publish = false
 
 [dependencies]
 rand = "0.8"
+indicatif = "0.18"
+console = "0.16"
