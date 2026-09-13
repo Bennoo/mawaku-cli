@@ -6,6 +6,7 @@ Craft richly lit video-call backdrops from a single prompt. **Mawaku** (間 *ma*
 
 ## Table of Contents
 - [Quickstart](#quickstart)
+- [Install via Homebrew](#install-via-homebrew)
 - [Spotlight Prompts](#spotlight-prompts)
 - [Configuration](#configuration)
 - [Docker Workflow](#docker-workflow)
@@ -87,6 +88,42 @@ Preview the progress UI, including a simulated failure, without API calls:
 
 ```bash
 cargo run -p mawaku-utils --example progress
+```
+
+---
+
+## Install via Homebrew
+
+macOS (Apple Silicon or Intel) and Linux (x86_64 or arm64) users can skip the Rust toolchain entirely and install a prebuilt binary via the project's Homebrew tap:
+
+```bash
+brew tap Bennoo/tap
+brew install mawaku
+```
+
+> **First-time tap trust:** on newer Homebrew versions, a tap you haven't used before may
+> need an explicit one-time trust grant before its formulas will load:
+> ```bash
+> brew trust Bennoo/tap
+> ```
+> If `brew install` reports the tap as untrusted, run this once, then retry.
+
+Save your Gemini API key (stored in `~/.mawaku/config.toml`, see [Configuration](#configuration)):
+
+```bash
+mawaku setup
+```
+
+Then generate a background:
+
+```bash
+mawaku --location "Lisbon, Portugal" --season spring --time-of-day dusk
+```
+
+To upgrade to the latest release later:
+
+```bash
+brew update && brew upgrade mawaku
 ```
 
 ---
