@@ -56,15 +56,16 @@ Location, season, lighting, and webcam framing rules stay consistent. Sparse loc
 references may be shared, but each arrangement remains different. Visual differences
 are encouraged rather than guaranteed by the image model.
 
-Each variant makes a separate, sequential image API request (and incurs its own API
-usage). Files use `p1`, `p2`, and `p3`.
+Each variant makes a separate image API request (and incurs its own API
+usage). With `--count 2` or `--count 3`, these requests run concurrently after the
+shared place description is prepared. Results are saved in variant order. Files use `p1`, `p2`, and `p3`.
 A failed variant is reported and the remaining variants are still attempted; there
 are no automatic retries. Without an API key, all requested prompts are printed.
 
 ### Terminal output
 
 Mawaku shows a compact scene header, animated spinners with elapsed time while
-preparing local details and generating each image, and a final saved-file summary.
+preparing local details and generating images (one shared spinner for concurrent requests), and a final saved-file summary.
 Completed variants stay visible; failed variants are marked and remaining work continues.
 For example (illustrative timings):
 
@@ -74,8 +75,7 @@ For example (illustrative timings):
   3 image variant(s)
 
   ✓ Preparing local details — ready (2.1s)
-  ✓ 1/3  Reading corner — saved (38.0s)
-  ⠋ 2/3  Living room  00:12
+  ⠋ Generating 3 images concurrently  00:12
 ```
 
 Use `-v` / `--verbose` to show full prompts and local reference details during

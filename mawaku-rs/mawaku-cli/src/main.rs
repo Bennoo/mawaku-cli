@@ -151,6 +151,26 @@ fn build_prompt_variants(
     }).collect()
 }
 
+/// Start every blocking request before waiting, preserving variant order in the results.
+fn generate_variants<T: Send>(prompts: &[String], generate: impl Fn(&str) -> T + Sync) -> Vec<T> {
+    if prompts.len() <= 1 {
+        return prompts.iter().map(|prompt| generate(prompt)).collect();
+    }
+    std::thread::scope(|scope| {
+        let workers: Vec<_> = prompts
+            .iter()
+            .map(|prompt| {
+                let generate = &generate;
+                scope.spawn(move || generate(prompt))
+            })
+            .collect();
+        workers
+            .into_iter()
+            .map(|worker| worker.join().expect("image generation worker panicked"))
+            .collect()
+    })
+}
+
 fn build_image_name_context(cli: &Cli) -> ImageNameContext {
     let mut builder = ImageNameBuilder::new(DEFAULT_FILE_NAME_PREFIX);
     builder.push_component(cli.location.as_deref());
@@ -219,7 +239,6 @@ fn main() {
         context.time_of_day.as_deref(),
         context.count,
     );
-    let mut saved = Vec::new();
     for (index, prompt) in prompts.iter().enumerate() {
         // Preserve prompt output for pipes and prompt-only use, while keeping the terminal calm.
         if verbose || !io::stdout().is_terminal() || api_key.is_none() {
@@ -228,16 +247,37 @@ fn main() {
             }
             println!("{prompt}");
         }
-        let Some(api_key) = api_key else {
-            continue;
-        };
+    }
+    let mut saved = Vec::new();
+    let batch_progress = api_key
+        .filter(|_| context.count > 1)
+        .map(|_| ProgressStep::new(format!("Generating {} images concurrently", context.count)));
+    let single_progress = api_key
+        .filter(|_| context.count == 1)
+        .map(|_| ProgressStep::new("1/1  Background"));
+    let responses =
+        api_key.map(|key| generate_variants(&prompts, |prompt| generate_image(key, prompt)));
+    if let Some(progress) = batch_progress {
+        let success = responses.as_ref().is_some_and(|responses| {
+            responses.iter().all(|result| {
+                result
+                    .as_ref()
+                    .is_ok_and(|response| !response.images.is_empty())
+            })
+        });
+        progress.finish(success, "requests completed");
+    }
+    let mut single_progress = single_progress;
+    for (index, response) in responses.into_iter().flatten().enumerate() {
         let label = if context.count == 1 {
             "Background"
         } else {
             ["Reading corner", "Living room", "Study corner"][index]
         };
-        let progress = ProgressStep::new(format!("{}/{}  {label}", index + 1, context.count));
-        match generate_image(api_key, prompt) {
+        let progress = single_progress.take().unwrap_or_else(|| {
+            ProgressStep::new(format!("{}/{}  {label}", index + 1, context.count))
+        });
+        match response {
             Ok(response) => {
                 let Some(image) = response.images.first() else {
                     progress.finish(false, "no image returned");

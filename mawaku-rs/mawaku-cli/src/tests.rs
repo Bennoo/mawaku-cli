@@ -408,3 +408,43 @@ fn saved_key_is_used_unless_environment_overrides_it() {
         assert!(warning.unwrap().contains("mawaku setup"));
     });
 }
+
+#[test]
+fn image_requests_overlap_and_keep_variant_results_in_order() {
+    let prompts = vec!["first".into(), "failure".into(), "third".into()];
+    let started = AtomicUsize::new(0);
+    let results = generate_variants(&prompts, |prompt| {
+        started.fetch_add(1, Ordering::SeqCst);
+        let deadline = Instant::now() + std::time::Duration::from_secs(5);
+        while started.load(Ordering::SeqCst) < 3 {
+            assert!(Instant::now() < deadline, "requests did not overlap");
+            std::thread::sleep(std::time::Duration::from_millis(1));
+        }
+        if prompt == "failure" {
+            Err("generation failed")
+        } else {
+            Ok(prompt.to_string())
+        }
+    });
+    assert_eq!(
+        results,
+        vec![
+            Ok("first".into()),
+            Err("generation failed"),
+            Ok("third".into())
+        ]
+    );
+}
+
+#[test]
+fn single_image_request_runs_once_on_the_calling_thread() {
+    let caller = std::thread::current().id();
+    let calls = AtomicUsize::new(0);
+    let results = generate_variants(&["single".into()], |prompt| {
+        assert_eq!(std::thread::current().id(), caller);
+        calls.fetch_add(1, Ordering::SeqCst);
+        prompt.to_string()
+    });
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    assert_eq!(results, vec!["single"]);
+}
