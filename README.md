@@ -34,13 +34,15 @@ Craft richly lit video-call backdrops from a single prompt. **Mawaku** (間 *ma*
      --time-of-day dusk
    ```
 
-3. **Save your Gemini API key**
+3. **Set your Gemini API key and image output directory**
 
    ```bash
    cargo run -p mawaku -- setup
    ```
 
-   Paste the key at the hidden prompt. Mawaku saves it in your user config for future runs.
+   Enter the key and image output directory. Existing values are prefilled, with the key
+   masked. Press Enter to keep each value, Backspace to edit, or Ctrl-U to clear it.
+   Mawaku saves both settings in your user config for future runs.
    With an installed binary, use `mawaku setup`.
 
 Generate up to three variations in one invocation:
@@ -274,13 +276,17 @@ Mawaku writes persistent settings to `~/.mawaku/config.toml` the first time you 
 
 > **Gemini credentials**
 >
-> Run `mawaku setup` to save or replace `[gemini_api].api_key` using hidden terminal input.
+> Run `mawaku setup` to edit `[gemini_api].api_key` and `image_output_dir`.
+> Both fields are prefilled from the config; the key is masked. Enter keeps the current
+> value, Backspace edits it, and Ctrl-U clears it. Both fields must be nonempty.
+> Output directories are created when images are saved; relative paths resolve from the working directory.
 > The key is stored in plain text in `~/.mawaku/config.toml` on Linux and macOS, or
 > `%USERPROFILE%\.mawaku\config.toml` on Windows. On Unix, the file is restricted to
 > its owner (`0600`); on Windows, it inherits the user directory's access permissions.
 > Setup uses the same user config regardless of how the binary was installed,
 > including source builds and macOS Homebrew installations. It does not validate the
-> key with Gemini or generate an image. An empty entry leaves the saved key unchanged.
+> key with Gemini or generate an image. Cancelling or submitting an empty field
+> leaves existing settings unchanged.
 >
 > A nonempty environment variable takes precedence over the saved key. Its name is
 > configured by `[gemini_api].api_key_env_var` and defaults to `GEMINI_API_KEY`.

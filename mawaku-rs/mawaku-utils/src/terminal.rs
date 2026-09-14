@@ -101,3 +101,46 @@ impl Drop for ProgressStep {
         self.bar.finish_and_clear();
     }
 }
+
+/// Edit a prefilled setting, optionally masking its characters on the terminal.
+pub fn prompt_setting(label: &str, initial: &str, secret: bool) -> io::Result<String> {
+    let term = console::Term::stderr();
+    if !term.is_term() {
+        return Err(io::Error::new(
+            io::ErrorKind::NotConnected,
+            "setup requires a terminal",
+        ));
+    }
+    let mut value: Vec<char> = initial.chars().collect();
+    loop {
+        term.clear_line()?;
+        let display = if secret {
+            "*".repeat(value.len())
+        } else {
+            value.iter().collect()
+        };
+        term.write_str(&format!("  {label}: {display}"))?;
+        match term.read_key()? {
+            console::Key::Enter => {
+                term.write_line("")?;
+                return Ok(value.into_iter().collect());
+            }
+            console::Key::Backspace => {
+                value.pop();
+            }
+            console::Key::Char('\u{15}') => value.clear(),
+            console::Key::CtrlC
+            | console::Key::Escape
+            | console::Key::Char('\u{3}')
+            | console::Key::Char('\u{4}') => {
+                term.write_line("")?;
+                return Err(io::Error::new(
+                    io::ErrorKind::Interrupted,
+                    "setup cancelled",
+                ));
+            }
+            console::Key::Char(character) if !character.is_control() => value.push(character),
+            _ => {}
+        }
+    }
+}

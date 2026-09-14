@@ -222,3 +222,21 @@ fn setup_persists_and_replaces_key_without_changing_settings() {
         }
     });
 }
+
+#[test]
+fn setup_updates_both_fields_and_preserves_other_settings() {
+    with_isolated_home(|_| {
+        let mut outcome = load_or_init().unwrap();
+        outcome.config.gemini_api.api_key_env_var = "CUSTOM_KEY".into();
+        update_setup(&mut outcome.config, " test-key ", " /tmp/my images ").unwrap();
+        save(&outcome.config, &outcome.path).unwrap();
+        let mut loaded = load_or_init().unwrap().config;
+        assert_eq!(loaded.gemini_api.api_key.as_deref(), Some("test-key"));
+        assert_eq!(loaded.image_output_dir, "/tmp/my images");
+        assert_eq!(loaded.gemini_api.api_key_env_var, "CUSTOM_KEY");
+        assert!(update_setup(&mut loaded, "replacement", " ").is_err());
+        assert!(update_setup(&mut loaded, " ", "replacement").is_err());
+        assert_eq!(loaded.gemini_api.api_key.as_deref(), Some("test-key"));
+        assert_eq!(loaded.image_output_dir, "/tmp/my images");
+    });
+}

@@ -91,6 +91,22 @@ pub fn save_gemini_api_key(key: &str) -> Result<PathBuf, ConfigError> {
     Ok(outcome.path)
 }
 
+/// Validate both setup fields before updating the configuration.
+pub fn update_setup(config: &mut Config, key: &str, output_dir: &str) -> Result<(), ConfigError> {
+    let key = key.trim();
+    let output_dir = output_dir.trim();
+    if key.is_empty() || output_dir.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "API key and image output directory cannot be empty",
+        )
+        .into());
+    }
+    config.gemini_api.api_key = Some(key.to_string());
+    config.image_output_dir = output_dir.to_string();
+    Ok(())
+}
+
 impl GeminiApiConfig {
     pub fn api_key_env_var(&self) -> &str {
         if self.api_key_env_var.trim().is_empty() {

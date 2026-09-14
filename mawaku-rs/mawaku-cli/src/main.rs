@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use mawaku_config::{Config, DEFAULT_PROMPT, load_or_init};
 use mawaku_gemini::{PlaceDescription, craft_prompt, generate_image, generate_place_description};
 use mawaku_image::{SaveImageOptions, save_base64_image};
-use mawaku_utils::terminal::{ProgressStep, print_header, print_notice};
+use mawaku_utils::terminal::{ProgressStep, print_header, print_notice, prompt_setting};
 use mawaku_utils::{
     DEFAULT_FILE_NAME_PREFIX, ImageNameBuilder, ImageNameContext, distribute_prompt_details,
     format_context_line, list_or_unspecified, trimmed_or_none,
@@ -51,7 +51,7 @@ struct Cli {
 
 #[derive(Subcommand, Debug, Clone)]
 enum Command {
-    /// Save your Gemini API key in the config file using hidden input.
+    /// Configure your Gemini API key and image output directory.
     Setup,
 }
 
@@ -63,11 +63,32 @@ fn setup() -> Result<(), String> {
         "The key will be stored in plain text in your Mawaku config file. Input is hidden.",
         false,
     );
-    let key = rpassword::prompt_password("  Gemini API key: ")
-        .map_err(|_| "Could not read the API key from the terminal.".to_string())?;
-    let path = mawaku_config::save_gemini_api_key(&key)
-        .map_err(|error| format!("Could not save API key: {error}"))?;
-    print_notice(&format!("API key saved to {}", path.display()), false);
+    let mut outcome =
+        load_or_init().map_err(|error| format!("Could not load configuration: {error}"))?;
+    print_notice(
+        "Press Enter to keep a value; Backspace edits it; Ctrl-U clears it.",
+        false,
+    );
+    let key = prompt_setting(
+        "Gemini API key",
+        outcome.config.gemini_api.api_key.as_deref().unwrap_or(""),
+        true,
+    )
+    .map_err(|_| "Could not read the API key from the terminal.".to_string())?;
+    let output_dir = prompt_setting(
+        "Image output directory",
+        &outcome.config.image_output_dir,
+        false,
+    )
+    .map_err(|_| "Could not read the output directory from the terminal.".to_string())?;
+    mawaku_config::update_setup(&mut outcome.config, &key, &output_dir)
+        .map_err(|error| format!("Could not update configuration: {error}"))?;
+    mawaku_config::save(&outcome.config, &outcome.path)
+        .map_err(|error| format!("Could not save configuration: {error}"))?;
+    print_notice(
+        &format!("Settings saved to {}", outcome.path.display()),
+        false,
+    );
     print_notice(
         "An exported API key environment variable takes precedence. No API request was made.",
         false,
