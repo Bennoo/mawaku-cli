@@ -1,6 +1,6 @@
 [package]
 name = "mawaku"
-version = "0.6.1"
+version = "0.7.1"
 edition.workspace = true
 description = "Command-line tool scaffold for generating video call backgrounds"
 license.workspace = true
